@@ -1,0 +1,1439 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Kıyamet Çarkı: Runeterra haritasında rastgele bölge, rol ve şampiyon seç. Kaybeden elenir, Destek ve Savaşçı galibiyetleri diriltme hakkı kazandırır.">
+<meta property="og:title" content="Kıyamet Çarkı">
+<meta property="og:description" content="Çark döner, biri düşer. Rastgele bölge, rol ve şampiyon seçip eleme challenge'ı oyna.">
+<meta property="og:image" content="kapak.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a0814">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230d0a1c' stroke='%23e2be6a' stroke-width='4'/%3E%3Cpath d='M32 10l5 17 17 5-17 5-5 17-5-17-17-5 17-5z' fill='%23e2be6a'/%3E%3C/svg%3E">
+<title>Kıyamet Çarkı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Cinzel:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: tek sahne. Ana ekran = tam ekran harita + alt komuta paneli. Diğer ekranlar karanlık cam panelde. Görseller özgün çizimdir. */
+:root {
+  --bg: #07080f;
+  --panel: #12101c;
+  --line: #2c2742;
+  --line-strong: #5a4f7a;
+  --fg: #f1ebdc;
+  --muted: #a79fb8;
+  --gold: #e2be6a;
+  --gold-d: #a8782a;
+  --seal: #e0414f;
+  --seal-fg: #ffffff;
+  --win: #4cc38a;
+  --win-fg: #06210f;
+  --chip: #1d1a2e;
+  --role-l: 44%;
+  --ov-bg: rgba(9,7,18,0.8);
+  --ov-fg: #f4ecd6;
+  --ov-muted: #b3a9c4;
+  --ov-line: rgba(226,190,106,0.34);
+  --ov-win: #5fe0a0;
+  --ov-seal: #ff6b78;
+  --ov-rev: #7fd8f0;
+  --tb: 86px;
+  --bbh: 56px;
+  --dockh: 62px;
+  --stack: calc(var(--bbh) + var(--dockh) + 176px);
+  --font-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --font-title: "Cinzel", "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: radial-gradient(ellipse at 50% -10%, #1d1333 0%, #0a0912 55%, #05050a 100%) fixed; color: var(--fg); font-family: var(--font-body); padding-inline: 16px; padding-block: 24px 48px; line-height: 1.5; }
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { margin: 0; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; text-transform: uppercase; letter-spacing: 0.04em; margin: 0; color: var(--gold); }
+.stage { background: linear-gradient(180deg, rgba(26,21,44,0.92), rgba(14,12,25,0.94)); border: 1px solid var(--line); border-radius: 14px; padding: 20px 16px; min-width: 0; overflow: hidden; box-shadow: 0 0 0 1px rgba(226,190,106,0.07) inset, 0 24px 70px rgba(0,0,0,0.5); }
+.view { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; animation: fade .4s ease-out; }
+.view[hidden] { display: none; }
+.shake { animation: shake .5s cubic-bezier(.36,.07,.19,.97) both; }
+.label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); }
+.big { font-family: var(--font-display); font-weight: 900; text-transform: uppercase; font-size: clamp(3rem, 14vw, 7.5rem); line-height: 1; overflow-wrap: anywhere; text-wrap: balance; }
+.view:not([hidden]) .big { animation: slam .6s cubic-bezier(.2,1.5,.4,1) both; }
+.reveal { min-height: 300px; justify-content: center; }
+.sub { color: var(--muted); font-family: var(--font-mono); font-size: 0.95rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+button { font: inherit; font-weight: 600; cursor: pointer; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--chip); color: var(--fg); padding: 11px 20px; }
+button:hover:not(:disabled) { border-color: var(--gold); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.draw { background: linear-gradient(180deg, #f2d98f, #c8963c); color: #22170a; border-color: #f6e0a4; font-weight: 700; font-size: 1.05rem; padding: 13px 28px; box-shadow: 0 4px 20px rgba(226,190,106,0.25); }
+.lose { background: var(--seal); color: var(--seal-fg); border-color: var(--seal); }
+.win { background: var(--win); color: var(--win-fg); border-color: var(--win); }
+.note { color: var(--muted); font-size: 0.9rem; min-height: 1.4em; }
+.gw { color: var(--ov-win); } .gl { color: var(--ov-seal); }
+
+/* Harita: karanlık savaş masası, altın sınırlar */
+.mapbox { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at 50% 42%, #1c1233 0%, #0a0814 56%, #040309 100%); overflow: hidden; }
+.mapbox::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 58%, rgba(0,0,0,0.6)); }
+.mapbox svg { position: absolute; left: 0; top: calc(var(--tb) + env(safe-area-inset-top, 0px)); width: 100%; height: calc(100% - var(--tb) - var(--stack) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: visible; }
+#amb { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+#fx { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 56; pointer-events: none; }
+#vMap { animation: none; }
+.rg { transition: opacity .2s ease; filter: drop-shadow(0 0 5px rgba(226,190,106,0.22)); }
+.rg .reg { stroke: rgba(226,190,106,0.8); stroke-width: 1.8; stroke-linejoin: round; fill-opacity: 0.92; }
+.rg .shore { fill: none; stroke: rgba(226,190,106,0.12); stroke-width: 14; stroke-linejoin: round; }
+.rg .patl { fill-opacity: 1; pointer-events: none; }
+.rg .medal circle { fill: #0c0914; stroke: #e2be6a; stroke-width: 2; }
+.rg .medal path { fill: none; stroke: #f4e7bd; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rg .lab { fill: #fff6dc; stroke: rgba(5,4,12,0.92); stroke-width: 4px; paint-order: stroke; font-family: var(--font-display); font-weight: 700; font-size: calc(var(--fs, 17) * var(--ls, 1) * 1px); text-anchor: middle; text-transform: uppercase; letter-spacing: 0.05em; pointer-events: none; }
+.rg.off { opacity: 0.3; }
+.rg.dim { opacity: 0.28; }
+.rg.hot { filter: drop-shadow(0 0 16px rgba(255,214,120,0.95)); }
+.rg.hot .reg { stroke: #ffffff; stroke-width: 4; filter: brightness(1.5) saturate(1.3); }
+.rg.hot .shore { stroke: rgba(255,226,160,0.5); }
+.rg.hot .medal circle { fill: var(--seal); stroke: #ffffff; }
+.ring { fill: none; stroke: #ffe3a1; stroke-width: 5; vector-effect: non-scaling-stroke; transform-box: fill-box; transform-origin: center; animation: ringx .9s ease-out forwards; pointer-events: none; }
+
+/* Ana ekran: marka, komuta düğmesi, istatistik paneli */
+body:not(.onmap) .homeonly { display: none; }
+body.onmap { overflow: hidden; background: #07080f; }
+body.onmap .wrap { max-width: none; padding: 0; gap: 0; }
+body.onmap .stage { background: transparent; border: 0; padding: 0; overflow: visible; box-shadow: none; }
+body.onmap .top { position: fixed; z-index: 6; top: 0; left: 0; right: 0; padding: calc(env(safe-area-inset-top, 0px) + 12px) 64px 26px; background: linear-gradient(rgba(5,4,10,0.94), rgba(5,4,10,0)); display: flex; justify-content: center; pointer-events: none; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand svg { width: 44px; height: 44px; flex: none; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7)); }
+.brand h1 { font-family: var(--font-title); font-weight: 900; font-size: clamp(1.2rem, 3.4vw, 1.9rem); letter-spacing: 0.22em; text-transform: uppercase; line-height: 1; background: linear-gradient(180deg, #fff4cf, #d9a84e 72%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 10px rgba(0,0,0,0.75)); }
+.brand .tagline { display: block; margin-top: 6px; font-size: 0.64rem; letter-spacing: 0.34em; text-transform: uppercase; color: var(--ov-muted); }
+.mapui { position: fixed; z-index: 6; left: 0; right: 0; bottom: calc(var(--bbh) + var(--dockh) + 16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 30px; padding-inline: 16px; pointer-events: none; }
+.mapui > * { pointer-events: auto; }
+.mapui .note { flex-basis: 100%; order: -1; text-align: center; color: var(--ov-fg); text-shadow: 0 1px 8px rgba(0,0,0,0.85); }
+.tab-l { order: 1; } .fate { order: 2; } .tab-r { order: 3; }
+.fate { position: relative; width: 128px; height: 128px; border-radius: 50%; padding: 0; display: grid; place-items: center; background: radial-gradient(circle at 50% 32%, #8a1a29, #2b0710 72%); border: 3px solid var(--gold); color: #fbe9b7; font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; line-height: 1.02; letter-spacing: 0.07em; text-transform: uppercase; box-shadow: 0 0 0 6px rgba(7,8,15,0.7), 0 0 34px rgba(224,65,79,0.45), inset 0 0 22px rgba(0,0,0,0.6); transition: transform .15s ease, box-shadow .2s ease; }
+.fate::before { content: ""; position: absolute; inset: -14px; border-radius: 50%; border: 2px dashed rgba(226,190,106,0.55); animation: spin 22s linear infinite; pointer-events: none; }
+.fate::after { content: ""; position: absolute; inset: -26px; border-radius: 50%; border: 1px solid rgba(226,190,106,0.2); pointer-events: none; }
+.fate:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(7,8,15,0.7), 0 0 50px rgba(255,90,100,0.7), inset 0 0 22px rgba(0,0,0,0.6); }
+.fate:disabled { filter: grayscale(0.7); opacity: 0.55; }
+.tab { display: none; align-items: center; gap: 10px; height: 46px; padding: 0 18px; border-radius: 999px; background: var(--ov-bg); border: 1px solid var(--ov-line); color: var(--ov-fg); font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; letter-spacing: 0.06em; text-transform: uppercase; backdrop-filter: blur(6px); }
+body.idle .tab { display: flex; }
+body.picking .tab { display: none; }
+.tab b { font-family: var(--font-mono); font-weight: 500; font-size: 0.9rem; letter-spacing: 0; padding: 1px 9px; border-radius: 999px; background: rgba(226,190,106,0.18); color: var(--gold); }
+.tab-r { border-color: rgba(224,65,79,0.55); }
+.tab-r b { background: rgba(224,65,79,0.2); color: var(--ov-seal); }
+.dock { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(var(--bbh) + env(safe-area-inset-bottom, 0px)); display: flex; align-items: stretch; background: var(--ov-bg); border: 1px solid var(--ov-line); border-radius: 14px; backdrop-filter: blur(6px); overflow: hidden; max-width: calc(100vw - 24px); }
+.dock .stat { position: relative; padding: 8px 20px; min-width: 96px; text-align: center; }
+.dock .stat + .stat::before { content: ""; position: absolute; left: 0; top: 22%; bottom: 22%; width: 1px; background: var(--ov-line); }
+.dock .stat b { display: block; font-family: var(--font-mono); font-size: 1.25rem; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ov-fg); white-space: nowrap; }
+.dock .stat > span { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ov-muted); }
+.dock .stat.r b { color: var(--ov-rev); }
+.l-short { display: none; }
+.bottombar { display: flex; flex-direction: column; gap: 20px; }
+.foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: center; color: var(--muted); font-size: 0.85rem; }
+.reset-row { display: flex; gap: 8px; align-items: center; }
+.legal { color: var(--muted); font-size: 0.78rem; max-width: 80ch; margin: 0; }
+body.onmap .bottombar { position: fixed; z-index: 6; left: 0; right: 0; bottom: 0; min-height: var(--bbh); padding: 8px 16px calc(env(safe-area-inset-bottom, 0px) + 8px); background: linear-gradient(rgba(5,4,10,0), rgba(5,4,10,0.94)); flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 16px; }
+body.onmap .bottombar .foot { color: var(--ov-muted); gap: 10px; }
+body.onmap .bottombar .legal { color: var(--ov-muted); font-size: 0.7rem; max-width: 72ch; }
+body.onmap .bottombar button { padding: 5px 12px; font-size: 0.8rem; background: var(--ov-bg); color: var(--ov-fg); border-color: var(--ov-line); }
+body.onmap .bottombar .lose { background: var(--seal); color: var(--seal-fg); border-color: var(--seal); }
+.mute { position: fixed; z-index: 70; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 12px; width: 42px; height: 42px; padding: 0; border-radius: 50%; display: grid; place-items: center; background: var(--ov-bg); border: 1px solid var(--ov-line); color: var(--gold); backdrop-filter: blur(6px); }
+.mute svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mute .off { display: none; }
+.mute.is-off { color: var(--muted); }
+.mute.is-off .on { display: none; }
+.mute.is-off .off { display: block; }
+
+/* Bölge sahnesi */
+.scenic { position: relative; margin: -20px -16px; padding: 40px 16px; min-height: 380px; overflow: hidden; justify-content: center; }
+.scene { position: absolute; inset: 0; }
+.scene svg { display: block; width: 100%; height: 100%; animation: drift 9s ease-out both; }
+.shade { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(5,8,18,0.6), rgba(5,8,18,0.12) 72%); }
+.onscene { position: relative; color: #fff; text-shadow: 0 2px 18px rgba(0,0,0,0.65); }
+.onscene.sub, .onscene.label { color: rgba(255,255,255,0.85); }
+
+/* Rol bayrakları */
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; width: 100%; padding-top: 14px; }
+.role { position: relative; min-height: 150px; padding: 26px 10px 46px; color: #fff; background: hsl(var(--rh) 58% var(--role-l)); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 84%, 0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: transform .14s ease, filter .14s ease, opacity .25s ease; }
+.role::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 8px; background: hsl(var(--rh) 50% calc(var(--role-l) - 14%)); }
+.role b { font-family: var(--font-display); font-size: 1.8rem; line-height: 1.05; text-transform: uppercase; letter-spacing: 0.04em; overflow-wrap: anywhere; }
+.role span { font-family: var(--font-mono); font-size: 0.85rem; opacity: 0.9; }
+.role.hot { transform: translateY(-8px); filter: brightness(1.28) saturate(1.15); }
+.role.dim { opacity: 0.3; }
+.role.lock { animation: lockp .55s ease-out; }
+
+/* Şampiyon havuzu ve arma */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; max-height: 380px; overflow-y: auto; }
+.cc { display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; font-size: 0.95rem; font-weight: 500; border: 1px solid var(--line); border-radius: 8px; background: var(--chip); transition: opacity .2s ease; }
+.cc.hot { background: var(--seal); border-color: #fff; color: var(--seal-fg); box-shadow: 0 0 18px rgba(224,65,79,0.7); }
+.cc.dim { opacity: 0.25; }
+.mini svg { display: block; width: 26px; height: auto; }
+.crest { position: relative; display: grid; place-items: center; }
+.crest::before { content: ""; position: absolute; width: min(430px, 92vw); aspect-ratio: 1; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(255,220,130,0.3) 0 7deg, transparent 7deg 16deg); -webkit-mask: radial-gradient(circle, #000 16%, transparent 68%); mask: radial-gradient(circle, #000 16%, transparent 68%); animation: spin 30s linear infinite; }
+.crest svg { position: relative; display: block; width: min(190px, 52vw); height: auto; filter: drop-shadow(0 8px 18px rgba(0,0,0,0.5)); animation: drop .7s cubic-bezier(.2,1.3,.4,1) both; }
+.tags { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.tag { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid var(--line-strong); border-radius: 4px; padding: 3px 10px; color: var(--muted); }
+.result-big { font-size: clamp(2.6rem, 11vw, 5.5rem); text-shadow: 0 0 34px rgba(226,190,106,0.35); }
+
+/* Yan çubuklar */
+.drawer { position: fixed; top: 0; bottom: 0; z-index: 40; width: min(340px, 88vw); background: #100e1a; color: var(--fg); display: flex; flex-direction: column; visibility: hidden; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); transition: transform .3s ease, visibility 0s linear .3s; }
+.dl { left: 0; transform: translateX(-100%); border-right: 1px solid var(--ov-line); }
+.dr { right: 0; transform: translateX(100%); border-left: 1px solid var(--ov-line); }
+body.l-open .dl, body.r-open .dr { transform: none; visibility: visible; transition-delay: 0s; }
+.dh { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px; border-bottom: 1px solid var(--line); }
+.dx { padding: 6px 12px; font-size: 0.85rem; }
+.dlist { list-style: none; margin: 0; padding: 12px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.it { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--chip); }
+.mini2 svg { display: block; width: 38px; height: auto; }
+.it-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.it-t b { font-weight: 600; overflow-wrap: anywhere; }
+.it-s { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.8rem; color: var(--muted); }
+.rtag { color: #fff; background: hsl(var(--rh) 58% var(--role-l)); border-radius: 3px; padding: 0 7px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.it i { font-style: normal; font-family: var(--font-mono); color: var(--ov-win); margin-left: 6px; }
+.unseal { padding: 5px 9px; font-size: 0.75rem; background: transparent; color: var(--ov-seal); border-color: var(--seal); }
+.unseal.pick { background: var(--win); color: var(--win-fg); border-color: var(--win); }
+.unseal.ok { background: var(--seal); color: var(--seal-fg); }
+.empty { color: var(--muted); font-size: 0.9rem; margin: 8px 4px; }
+.rnote { padding: 12px 16px; font-size: 0.85rem; color: var(--muted); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.rnote b { color: var(--fg); }
+.rnote.pickbox { color: var(--fg); border-left: 4px solid var(--seal); }
+.rnote .lose { align-self: flex-start; padding: 8px 14px; font-size: 0.85rem; }
+body.picking .dx { display: none; }
+.scrim { position: fixed; inset: 0; z-index: 35; background: rgba(3,2,8,0.6); opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility 0s linear .3s; }
+body.l-open .scrim, body.r-open .scrim { opacity: 1; visibility: visible; transition-delay: 0s; }
+
+/* Dolu hak, boş liste uyarısı */
+.modal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(3,2,8,0.75); }
+.modal[hidden] { display: none; }
+#choiceT { font-size: 1.5rem; }
+.copts { display: flex; gap: 12px; width: 100%; flex-wrap: wrap; justify-content: center; }
+.copt { flex: 1 1 140px; display: flex; flex-direction: column; gap: 4px; align-items: center; padding: 14px 12px; border-radius: 12px; border: 1px solid var(--ov-line); background: #1d1930; color: var(--fg); font: inherit; cursor: pointer; }
+.copt b { font-size: 1.05rem; }
+.copt span { font-size: 0.8rem; color: var(--muted); }
+.copt:hover, .copt:focus-visible { border-color: #e2be6a; background: #272240; outline: none; }
+.mapui .bonus { flex-basis: 100%; order: -1; display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
+.bonus:empty { display: none; }
+.bchip { padding: 3px 11px; border-radius: 999px; font-size: 0.72rem; letter-spacing: 0.06em; border: 1px solid hsl(var(--rh) 55% 55%); color: hsl(var(--rh) 75% 82%); background: hsl(var(--rh) 40% 14% / 0.88); }
+body.r-open .mute { opacity: 0; pointer-events: none; }
+.rules { padding: 10px 16px; font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid var(--line); }
+.rules summary { cursor: pointer; color: var(--fg); }
+.rules[open] { max-height: 38vh; overflow: auto; }
+.rules ul { margin: 8px 0 0; padding-left: 18px; }
+.rules li { margin: 6px 0; }
+.rules b { color: var(--fg); }
+.modal-card { background: #14111f; color: var(--fg); border: 1px solid var(--ov-line); border-radius: 14px; padding: 28px 24px; max-width: 380px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.modal-card svg { animation: wob .8s ease-in-out 2; }
+.modal-card h2 { font-size: 2rem; }
+.modal-card p { margin: 0; color: var(--muted); }
+
+/* Sonuç geçişi */
+.flash { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; color: #fff; background: var(--seal); opacity: 0; visibility: hidden; transition: opacity 0.9s ease, visibility 0s linear 0.9s; }
+.flash.on { opacity: 1; visibility: visible; transition: opacity 0.9s ease; }
+.flash.win { background: radial-gradient(ellipse at 50% 45%, #2fb577 0%, #0d4a2e 100%); color: #eafff3; }
+.flash.lose { background: radial-gradient(ellipse at 50% 45%, #c0192b 0%, #3a050c 100%); color: #fff; }
+.flash .sub { color: inherit; opacity: 0.85; }
+
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slam { from { transform: scale(1.35); opacity: 0; letter-spacing: 0.12em; filter: blur(6px); } to { transform: none; opacity: 1; letter-spacing: 0; filter: none; } }
+@keyframes drop { from { transform: translateY(-70px) scale(1.5); opacity: 0; } 60% { opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes ringx { from { transform: scale(0.3); opacity: 0.95; } to { transform: scale(5); opacity: 0; } }
+@keyframes lockp { 0% { transform: translateY(0) scale(1); filter: brightness(1.2); } 40% { transform: translateY(-14px) scale(1.1); filter: brightness(1.7); } 100% { transform: none; filter: none; } }
+@keyframes shake { 10%, 90% { transform: translate(-2px, 0); } 20%, 80% { transform: translate(4px, -2px); } 30%, 50%, 70% { transform: translate(-8px, 3px); } 40%, 60% { transform: translate(8px, -3px); } }
+@keyframes drift { from { transform: scale(1.12); } to { transform: scale(1); } }
+@keyframes wob { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+
+@media (max-width: 700px) {
+  :root { --tb: 74px; --bbh: 116px; --dockh: 60px; }
+  .brand svg { width: 34px; height: 34px; }
+  .brand h1 { letter-spacing: 0.14em; }
+  .brand .tagline { letter-spacing: 0.22em; }
+  body.onmap .top { padding-inline: 56px; }
+  .fate { width: 108px; height: 108px; font-size: 1.05rem; }
+  .mapui { gap: 8px 14px; }
+  .tab { flex-direction: column; gap: 2px; height: auto; padding: 8px 10px; border-radius: 14px; font-size: 0.78rem; min-width: 100px; }
+  .tab b { font-size: 0.8rem; padding: 0 8px; }
+  .dock { width: calc(100vw - 24px); }
+  .dock .stat { flex: 1; min-width: 0; padding: 6px 4px; }
+  .dock .stat b { font-size: 1rem; }
+  .dock .stat > span { font-size: 0.56rem; letter-spacing: 0.08em; }
+  .l-full { display: none; }
+  .l-short { display: inline; }
+  body.onmap .bottombar .legal { font-size: 0.62rem; }
+}
+@media (max-aspect-ratio: 1/1) { .mapbox svg { --ls: 1.7; } }
+@media (prefers-reduced-motion: reduce) {
+  .view, .view:not([hidden]) .big, .shake, .crest::before, .crest svg, .fate::before, .scene svg, .role.lock, .ring, .modal-card svg { animation: none; }
+  .flash, .flash.on, .role, .rg, .drawer, .scrim { transition: none; }
+}
+.mapbox svg { --ls: 1.15; }
+@media (max-aspect-ratio: 1/1) { .mapbox svg { --ls: 1.7; } }
+@media (min-aspect-ratio: 5/4) and (min-width: 900px) {
+  :root { --tb: 76px; --stack: calc(var(--bbh) + 10px); --mh: min(calc(100vh - var(--tb) - var(--stack)), calc((100vw - 460px) / 1.5625)); --sidew: calc((100vw - var(--mh) * 1.5625) / 2); }
+  .mapbox svg { height: var(--mh); }
+  .mapui { left: auto; right: 0; top: 50%; bottom: auto; transform: translateY(-50%); width: var(--sidew); flex-direction: column; flex-wrap: nowrap; gap: 14px; padding-inline: 12px; }
+  .mapui .note { order: 4; flex-basis: auto; width: 100%; font-size: 0.8rem; }
+  .mapui .bonus { order: 5; flex-basis: auto; }
+  .fate { order: 1; } .tab-l { order: 2; } .tab-r { order: 3; }
+  .mapui .tab { width: 100%; max-width: 220px; justify-content: center; padding-inline: 10px; font-size: 0.9rem; letter-spacing: 0.03em; white-space: nowrap; }
+  .dock { left: 10px; top: 50%; bottom: auto; transform: translateY(-50%); flex-direction: column; width: calc(var(--sidew) - 24px); max-width: 240px; }
+  .dock .stat { min-width: 0; }
+  .dock .stat + .stat::before { left: 18%; right: 18%; top: 0; bottom: auto; width: auto; height: 1px; }
+}
+/* Rol bayrakları: uzun, sembollü, kural satırlı */
+#vRole { position: relative; isolation: isolate; width: 100%; }
+.rolebg { position: absolute; inset: -20px -16px; z-index: -1; opacity: 0.3; filter: saturate(0.8) blur(1.5px); pointer-events: none; -webkit-mask-image: radial-gradient(ellipse at center, #000 40%, transparent 85%); mask-image: radial-gradient(ellipse at center, #000 40%, transparent 85%); }
+.rolebg svg { width: 100%; height: 100%; display: block; }
+.roles { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px; padding-top: 22px; align-items: start; }
+.role { min-height: clamp(300px, 52vh, 460px); padding: 34px 12px 70px; gap: 10px; justify-content: flex-start; background: linear-gradient(180deg, hsl(var(--rh) 62% calc(var(--role-l) + 8%)), hsl(var(--rh) 58% calc(var(--role-l) - 6%))); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 44px), 0 100%); overflow: hidden; }
+.role::before { height: 14px; background: linear-gradient(180deg, #f1dd9a, #b88a2c); box-shadow: 0 2px 6px rgba(0,0,0,0.45); }
+.role > * { position: relative; z-index: 1; }
+.role::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: repeating-linear-gradient(135deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 14px), linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.22) 50%, transparent 62%); background-size: auto, 260% 100%; background-position: 0 0, 160% 0; animation: shimmer 5s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 0.5s); }
+@keyframes shimmer { 0%, 60% { background-position: 0 0, 160% 0; } 100% { background-position: 0 0, -60% 0; } }
+.rico { display: grid; place-items: center; width: 74px; height: 74px; margin-top: 10px; border-radius: 50%; background: rgba(8,6,16,0.38); border: 2px solid rgba(255,236,170,0.85); box-shadow: 0 0 0 5px rgba(255,255,255,0.08), 0 0 22px rgba(255,236,170,0.35); }
+.rico svg { width: 40px; height: 40px; fill: none; stroke: #fff6dc; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.role b { font-size: 1.55rem; margin-top: 4px; text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+.role .rcount { font-style: normal; font-family: var(--font-mono); font-size: 0.82rem; padding: 3px 12px; border-radius: 999px; background: rgba(8,6,16,0.35); }
+.rrules { margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.25); }
+.rrules p { margin: 0; font-size: 0.78rem; line-height: 1.25; display: flex; flex-direction: column; gap: 1px; }
+.rrules small { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.75; }
+.rrules .g small { color: #d8ffd0; } .rrules .r small { color: #ffd0d0; }
+.role.hot { transform: translateY(-10px); }
+.view:not([hidden]) .role:not(.lock) { animation: drop .6s cubic-bezier(.2,.9,.3,1.15) both; animation-delay: calc(var(--i, 0) * 80ms); }
+@media (max-width: 700px) {
+  .roles { grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; }
+  .role { min-height: 250px; padding: 24px 5px 56px; gap: 6px; }
+  .rico { width: 46px; height: 46px; margin-top: 4px; } .rico svg { width: 25px; height: 25px; }
+  .role b { font-size: 0.95rem; letter-spacing: 0.01em; }
+  .role .rcount { font-size: 0.68rem; padding: 2px 8px; }
+  .rrules { gap: 6px; padding-top: 8px; }
+  .rrules p { font-size: 0.64rem; }
+  .rrules small { font-size: 0.54rem; letter-spacing: 0.06em; }
+}
+@media (prefers-reduced-motion: reduce) { .role::after, .view:not([hidden]) .role:not(.lock) { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top homeonly">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4l22 8v18c0 14-9 25-22 30C19 55 10 44 10 30V12z" fill="#1a1226" stroke="#e2be6a" stroke-width="2.5"/><path d="M32 16l4.6 9.6 10.4 1.4-7.6 7.3 1.9 10.4L32 39.8l-9.3 4.9 1.9-10.4L17 27l10.4-1.4z" fill="#e2be6a"/></svg>
+      <div>
+        <h1>Kıyamet Çarkı</h1>
+        <span class="tagline">Çark döner, biri düşer</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="stage" aria-label="Seçim ekranı">
+    <!-- 1. Harita -->
+    <div class="view" id="vMap">
+      <div class="mapbox"><svg id="map" viewBox="0 0 1000 640" role="img" aria-label="Runeterra haritası"></svg><canvas id="amb" aria-hidden="true"></canvas></div>
+      <div class="mapui">
+        <div class="note" id="mapNote"></div>
+        <div class="bonus" id="bonus" aria-live="polite"></div>
+        <button class="tab tab-l" id="tabWon" aria-expanded="false" aria-controls="drWon"><span>Kazanılanlar</span> <b id="nWon">0</b></button>
+        <button class="fate" id="btnRegion"><span>Bölgeyi<br>belirle</span></button>
+        <button class="tab tab-r" id="tabSeal" aria-expanded="false" aria-controls="drSeal"><span>Elenenler</span> <b id="nSeal">0</b></button>
+      </div>
+    </div>
+
+    <!-- 2. Bölge sahnesi -->
+    <div class="view scenic" id="vRegion" hidden>
+      <div class="scene" id="scene"></div>
+      <div class="shade"></div>
+      <div class="label onscene">Seçilen bölge</div>
+      <div class="big onscene" id="regName"></div>
+      <div class="sub onscene" id="regSub"></div>
+    </div>
+
+    <!-- 3. Roller -->
+    <div class="view" id="vRole" hidden>
+      <div class="rolebg" id="roleBg" aria-hidden="true"></div>
+      <div class="label" id="roleHead"></div>
+      <div class="roles" id="roles"></div>
+      <div class="actions"><button class="draw" id="btnRole">Rolü seç</button></div>
+    </div>
+
+    <!-- 4. Rol adı -->
+    <div class="view reveal" id="vRoleName" hidden>
+      <div class="label">Seçilen rol</div>
+      <div class="big" id="roleName"></div>
+      <div class="sub" id="roleSub"></div>
+    </div>
+
+    <!-- 5. Şampiyon havuzu -->
+    <div class="view" id="vChamp" hidden>
+      <div class="label" id="champHead"></div>
+      <div class="chips" id="champs"></div>
+      <div class="note" id="champNote"></div>
+    </div>
+
+    <!-- 6. Sonuç -->
+    <div class="view reveal" id="vResult" hidden>
+      <div class="label">Şampiyonun</div>
+      <div class="crest" id="resCrest"></div>
+      <div class="big result-big" id="resName"></div>
+      <div class="tags"><span class="tag" id="resRegion"></span><span class="tag" id="resRole"></span></div>
+      <div class="actions">
+        <button class="win" id="btnWin">Kazandım</button>
+        <button class="lose" id="btnLose">Kaybettim, ele</button>
+        <button class="draw" id="btnAgain">Tekrar çevir</button>
+      </div>
+      <div class="note" id="resNote"></div>
+    </div>
+  </section>
+
+  <div class="dock homeonly" aria-live="polite">
+    <div class="stat"><b id="sRemain">0</b><span><span class="l-full">Kalan şampiyon</span><span class="l-short">Kalan</span></span></div>
+    <div class="stat"><b id="sPlayed">0</b><span><span class="l-full">Oynanan maç</span><span class="l-short">Maç</span></span></div>
+    <div class="stat"><b id="sWL"><span class="gw">0</span>–<span class="gl">0</span></b><span><span class="l-full">Galibiyet–Mağlubiyet</span><span class="l-short">G–M</span></span></div>
+    <div class="stat"><b id="sRate">—</b><span><span class="l-full">Kazanma oranı</span><span class="l-short">Oran</span></span></div>
+    <div class="stat r"><b id="sRights">0/5</b><span><span class="l-full">Diriltme hakkı</span><span class="l-short">Hak</span></span></div>
+  </div>
+  <div class="bottombar">
+  <div class="foot homeonly">
+    <span>Liste bu tarayıcıda saklanır.</span>
+    <div class="reset-row">
+      <button id="btnReset">Listeyi sıfırla</button>
+      <button id="btnResetYes" class="lose" hidden>Evet, sıfırla</button>
+      <button id="btnResetNo" hidden>Vazgeç</button>
+    </div>
+  </div>
+  <p class="legal">Bu sayfa bir hayran projesidir ve Riot Games tarafından onaylanmamış ya da desteklenmemiştir (Riot Games does not endorse or sponsor this project). Şampiyon ve bölge adları Riot Games'e aittir. Sayfadaki harita, sahneler ve armalar özgün çizimlerdir.</p>
+  </div>
+</div>
+
+<div class="modal" id="choice" role="dialog" aria-modal="true" aria-labelledby="choiceT" hidden>
+  <div class="modal-card">
+    <h2 id="choiceT"></h2>
+    <p id="choiceP"></p>
+    <div class="copts" id="choiceOpts"></div>
+  </div>
+</div>
+
+<div class="modal" id="pity" role="dialog" aria-modal="true" aria-labelledby="pityT" hidden>
+  <div class="modal-card">
+    <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#f1dd9a" stroke="#0c1224" stroke-width="3"/><circle cx="23" cy="26" r="3.5" fill="#0c1224"/><circle cx="41" cy="26" r="3.5" fill="#0c1224"/><path d="M20 38q12 12 24 0" fill="none" stroke="#0c1224" stroke-width="3.5" stroke-linecap="round"/></svg>
+    <h2 id="pityT">Yazık!</h2>
+    <p>Hakların dolu ve elenmiş şampiyonun yok. Bu hak boşa gitti, ceza olarak rastgele bir şampiyon elenecek.</p>
+    <button class="draw" id="pityOk">Tamam</button>
+  </div>
+</div>
+
+<!-- Yan çubuklar: yalnızca harita ekranında görünür -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer dl" id="drWon" aria-hidden="true" aria-label="Kazanılan şampiyonlar">
+  <div class="dh"><h2>Kazanılanlar</h2><button class="dx" id="xWon" aria-label="Kapat">Kapat</button></div>
+  <ul class="dlist" id="wonList"></ul>
+</aside>
+<aside class="drawer dr" id="drSeal" aria-hidden="true" aria-label="Elenen şampiyonlar">
+  <div class="dh"><h2>Elenenler</h2><button class="dx" id="xSeal" aria-label="Kapat">Kapat</button></div>
+  <div class="rnote" id="rightsNote"></div>
+  <details class="rules"><summary>Rol ödülleri ve cezaları</summary><ul>
+    <li><b>Destek:</b> yeni şampiyonla ilk galibiyette +1 hak. Kaybedersen bir sonraki galibiyetin rol ödülü verilmez.</li>
+    <li><b>Savaşçı:</b> her 3. galibiyette +1 hak. Kaybedersen sayaç sıfırlanır.</li>
+    <li><b>Tank:</b> kazanınca kalkan (şampiyon elenenlere girmez, mağlubiyet yine yazılır). Kaybedersen aynı bölgeden bir şampiyon daha elenir.</li>
+    <li><b>Nişancı:</b> kazanınca bir sonraki turda 2 şampiyon adayından seçersin. Kaybedersen bekleyen seçim bonusların silinir.</li>
+    <li><b>Süikastçı:</b> kazanınca bir sonraki kaybında elenmezsin (koruma, mağlubiyet yine yazılır). Kaybedersen 1 hak düşer.</li>
+    <li><b>Büyücü:</b> kazanınca bir sonraki turda 2 bölgeden seçersin. Kaybedersen kalkan ve korumaların silinir.</li>
+  </ul></details>
+  <ul class="dlist" id="sealList"></ul>
+</aside>
+
+<div class="flash" id="flash" aria-live="assertive"><div class="big" id="flashTxt"></div><div class="sub" id="flashSub"></div></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<button class="mute" id="mute" aria-pressed="false" aria-label="Sesi kapat" title="Ses">
+  <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 9a4 4 0 010 6M19 6.5a8 8 0 010 11"/></svg>
+  <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+</button>
+
+<script>
+(function () {
+  var ROLE_ORDER = ["F", "N", "D", "T", "S", "B"];
+  var RN = { F: "Savaşçı", N: "Nişancı", D: "Destek", T: "Tank", S: "Süikastçı", B: "Büyücü" };
+  var ROLE_H = { F: 18, N: 45, D: 170, T: 215, S: 275, B: 320 };
+
+  // Stilize harita: coğrafi yerleşim yaklaşık, ölçek yok.
+  var REGIONS = [
+    { id: "Fr", name: "Freljord", land: "hsl(205 28% 66%)", pat: "peaks", pts: "120,40 420,30 560,70 520,150 380,170 240,150 130,120" },
+    { id: "De", name: "Demacia", land: "hsl(150 30% 38%)", pat: "forest", pts: "90,175 250,165 300,235 290,335 180,355 80,295" },
+    { id: "No", name: "Noxus", land: "hsl(8 38% 36%)", pat: "hatch", pts: "315,185 520,175 610,245 580,345 440,365 315,335" },
+    { id: "Pi", name: "Piltover", land: "hsl(38 48% 56%)", pat: "grid", pts: "645,235 745,220 795,275 765,335 665,335" },
+    { id: "Za", name: "Zaun", land: "hsl(92 42% 34%)", pat: "dots", pts: "665,350 775,350 795,415 705,445 635,405" },
+    { id: "Io", name: "Ionia", land: "hsl(140 40% 44%)", pat: "forest", pts: "855,125 965,115 990,205 960,295 880,305 835,225" },
+    { id: "Sh", name: "Shurima", land: "hsl(36 58% 58%)", pat: "dunes", pts: "305,405 445,385 585,405 625,485 545,565 385,575 295,505" },
+    { id: "Ta", name: "Targon", land: "hsl(262 32% 46%)", pat: "peaks", pts: "665,475 745,460 805,505 775,585 695,595 645,545" },
+    { id: "Ix", name: "Ixtal", land: "hsl(128 52% 28%)", pat: "forest", pts: "845,385 935,375 975,455 935,535 855,525 825,455" },
+    { id: "Bi", name: "Bilgewater", land: "hsl(190 40% 40%)", pat: "waves", pts: "855,550 935,555 965,610 885,625", fs: 15 },
+    { id: "Sd", name: "Gölge Adaları", land: "hsl(168 24% 30%)", pat: "dots", pts: "40,430 135,420 155,500 115,565 40,545", fs: 15, two: true },
+    { id: "Ba", name: "Bandle Şehri", land: "hsl(305 42% 52%)", pat: "dots", c: [655, 105, 30] },
+    { id: "Vo", name: "Boşluk", land: "hsl(280 62% 30%)", pat: "hatch", c: [215, 500, 34] },
+    { id: "Ru", name: "Runeterra", land: "hsl(44 62% 54%)", pat: "dunes", c: [740, 60, 26] }
+  ];
+
+  // Genel amaçlı özgün simgeler (24x24 kutu)
+  var GLYPH = {
+    Fr: "M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7",
+    De: "M12 3l7 3v6c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6z",
+    No: "M7 4l10 16M17 4L7 20M12 3v18",
+    Pi: "M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2",
+    Za: "M9 3h6M10 3v6l-5 10a2 2 0 002 3h10a2 2 0 002-3l-5-10V3",
+    Io: "M5 19C5 10 11 4 20 4c0 9-6 15-15 15zM5 19L14 10",
+    Sh: "M12 8a4 4 0 100 8 4 4 0 000-8zM12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M19.8 4.2l-2.1 2.1M6.3 17.7l-2.1 2.1",
+    Ta: "M3 20l7-12 4 6 3-4 4 10z",
+    Ix: "M12 2l8 10-8 10-8-10zM12 6v12",
+    Bi: "M3 10q3-3 6 0t6 0t6 0M3 16q3-3 6 0t6 0t6 0",
+    Sd: "M16 3a9 9 0 100 18 7 7 0 010-18z",
+    Ba: "M4 11a8 7 0 0116 0zM10 11v8h4v-8",
+    Vo: "M12 10a2 2 0 100 4 2 2 0 000-4zM12 5a7 7 0 100 14 7 7 0 000-14z",
+    Ru: "M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"
+  };
+
+  var DATA = "Aatrox|Sh|F\nAhri|Io|B\nAkali|Io|S\nAkshan|Sh|N\nAlistar|No|T\nAmbessa|No|F\nAmumu|Sh|T\nAnivia|Fr|B\nAnnie|No|B\nAphelios|Ta|N\nAshe|Fr|N\nAurelion Sol|Ta|B\nAurora|Fr|B\nAzir|Sh|B\nBard|Ru|D\nBel'Veth|Vo|F\nBlitzcrank|Za|T\nBrand|Ru|B\nBraum|Fr|D\nBriar|No|F\nCaitlyn|Pi|N\nCamille|Pi|F\nCassiopeia|No|B\nCho'Gath|Vo|T\nCorki|Ba|N\nDarius|No|F\nDiana|Ta|F\nDr. Mundo|Za|T\nDraven|No|N\nEkko|Za|S\nElise|Sd|B\nEvelynn|Ru|S\nEzreal|Pi|N\nFiddlesticks|Ru|B\nFiora|De|F\nFizz|Bi|S\nGalio|De|T\nGangplank|Bi|F\nGaren|De|F\nGnar|Fr|F\nGragas|Fr|F\nGraves|Bi|N\nGwen|Sd|F\nHecarim|Sd|F\nHeimerdinger|Pi|B\nHwei|Io|B\nIllaoi|Bi|F\nIrelia|Io|F\nIvern|Io|D\nJanna|Za|D\nJarvan IV|De|F\nJax|Ru|F\nJayce|Pi|F\nJhin|Io|N\nJinx|Za|N\nK'Sante|Sh|T\nKai'Sa|Vo|N\nKalista|Sd|N\nKarma|Io|B\nKarthus|Sd|B\nKassadin|Vo|S\nKatarina|No|S\nKayle|De|F\nKayn|Io|F\nKennen|Io|B\nKha'Zix|Vo|S\nKindred|Ru|N\nKled|No|F\nKog'Maw|Vo|N\nLeBlanc|No|S\nLee Sin|Io|F\nLeona|Ta|T\nLillia|Io|F\nLissandra|Fr|B\nLucian|De|N\nLulu|Ba|D\nLux|De|B\nMalphite|Ix|T\nMalzahar|Vo|B\nMaokai|Sd|T\nMaster Yi|Io|S\nMel|No|B\nMilio|Ix|D\nMiss Fortune|Bi|N\nMordekaiser|No|F\nMorgana|De|B\nNaafiri|Sh|S\nNami|Ru|D\nNasus|Sh|F\nNautilus|Bi|T\nNeeko|Ix|B\nNidalee|Ix|S\nNilah|Bi|F\nNocturne|Ru|S\nNunu ve Willump|Fr|T\nOlaf|Fr|F\nOrianna|Pi|B\nOrnn|Fr|T\nPantheon|Ta|F\nPoppy|De|T\nPyke|Bi|D\nQiyana|Ix|S\nQuinn|De|N\nRakan|Io|D\nRammus|Sh|T\nRek'Sai|Vo|F\nRell|No|T\nRenata Glasc|Za|D\nRenekton|Sh|F\nRengar|Ix|S\nRiven|No|F\nRumble|Ba|F\nRyze|Ru|B\nSamira|No|N\nSejuani|Fr|T\nSenna|Sd|N\nSeraphine|Pi|B\nSett|Io|F\nShaco|Ru|S\nShen|Io|T\nShyvana|De|F\nSinged|Za|T\nSion|No|T\nSivir|Sh|N\nSkarner|Ix|F\nSmolder|Ix|N\nSona|De|D\nSoraka|Ta|D\nSwain|No|B\nSylas|De|B\nSyndra|Io|B\nTahm Kench|Bi|D\nTaliyah|Sh|B\nTalon|No|S\nTaric|Ta|D\nTeemo|Ba|N\nThresh|Sd|D\nTristana|Ba|N\nTrundle|Fr|F\nTryndamere|Fr|F\nTwisted Fate|Bi|B\nTwitch|Za|N\nUdyr|Fr|F\nUrgot|No|F\nVarus|Io|N\nVayne|De|N\nVeigar|Ba|B\nVel'Koz|Vo|B\nVex|Sd|B\nVi|Pi|F\nViego|Sd|F\nViktor|Za|B\nVladimir|No|B\nVolibear|Fr|F\nWarwick|Za|F\nWukong|Io|F\nXayah|Io|N\nXerath|Sh|B\nXin Zhao|De|F\nYasuo|Io|F\nYone|Io|F\nYorick|Sd|F\nYunara|Io|N\nYuumi|Ba|D\nZaahen|Sh|F\nZac|Za|T\nZed|Io|S\nZeri|Za|N\nZiggs|Ba|B\nZilean|Ru|D\nZoe|Ta|B\nZyra|Ix|B";
+  var CH = DATA.split("\n").map(function (l) { var p = l.split("|"); return { n: p[0], r: p[1], roles: p[2].split("") }; });
+  var REG = {}; REGIONS.forEach(function (r) { REG[r.id] = r; });
+
+  var KEY = "muhur-secici-v2";
+  function newBonus() { return { shield: 0, guard: 0, pc: 0, pr: 0, fw: 0, nb: 0 }; }
+  var MAXR = 5, homeMsg = "", confirmIdx = -1;
+  var state = { sealed: [], wins: 0, losses: 0, sealRole: {}, won: [], rights: 0, rightFrom: [], pending: false, pity: false, bonus: newBonus() };
+  var runId = 0, busy = false, run = {}, gid = 0;
+  var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  var $ = function (id) { return document.getElementById(id); };
+  var VIEWS = ["vMap", "vRegion", "vRole", "vRoleName", "vChamp", "vResult"];
+
+  /* ---------- Ses efektleri: WebAudio ile üretilir, dosya gerekmez. Her ses belirli bir olaya bağlıdır. ---------- */
+  var sfx = (function () {
+    var ctx = null, master = null, muted = false, seed = 7;
+    try { muted = localStorage.getItem("kader-muted") === "1"; } catch (e) {}
+    function init() {
+      if (ctx) return ctx;
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC(); master = ctx.createGain(); master.gain.value = 0.32; master.connect(ctx.destination);
+      } catch (e) { ctx = null; }
+      return ctx;
+    }
+    function resume() { var c = init(); if (c && c.state === "suspended") { try { c.resume(); } catch (e) {} } }
+    function ok() { return !muted && ctx && ctx.state !== "closed"; }
+    function tone(f, t, d, type, v, f2) {
+      var o = ctx.createOscillator(), g = ctx.createGain(), t0 = ctx.currentTime + t;
+      o.type = type || "sine"; o.frequency.setValueAtTime(f, t0);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + d);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v || 0.2, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+      o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + d + 0.05);
+    }
+    function noise(t, d, v, f0, f1) {
+      var n = Math.floor(ctx.sampleRate * d), b = ctx.createBuffer(1, n, ctx.sampleRate), a = b.getChannelData(0), i;
+      for (i = 0; i < n; i++) { seed = (seed * 1664525 + 1013904223) >>> 0; a[i] = seed / 2147483648 - 1; }
+      var src = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(), t0 = ctx.currentTime + t;
+      src.buffer = b; fl.type = "bandpass"; fl.Q.value = 0.9; fl.frequency.setValueAtTime(f0, t0);
+      if (f1) fl.frequency.exponentialRampToValueAtTime(f1, t0 + d);
+      g.gain.setValueAtTime(v, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+      src.connect(fl); fl.connect(g); g.connect(master); src.start(t0);
+    }
+    var base = { region: 196, role: 294, champ: 392 };
+    return {
+      resume: resume,
+      isMuted: function () { return muted; },
+      setMuted: function (m) { muted = !!m; try { localStorage.setItem("kader-muted", muted ? "1" : "0"); } catch (e) {} },
+      // Tarama: kısa tık, ilerledikçe perde yükselir
+      tick: function (kind, p) { if (!ok()) return; tone((base[kind] || 260) * (1 + p * 0.9), 0, 0.06, "triangle", 0.1); },
+      click: function () { if (!ok()) return; tone(520, 0, 0.05, "square", 0.05, 380); },
+      whoosh: function () { if (!ok()) return; noise(0, 0.28, 0.12, 400, 2400); },
+      // Kilitlenme: bölge = ağır darbe + çan, rol = çift çan, şampiyon = dört notalı fanfar
+      lock: function (kind) {
+        if (!ok()) return;
+        if (kind === "region") { tone(90, 0, 0.55, "sine", 0.5, 38); noise(0, 0.25, 0.14, 900, 200); tone(523, 0.05, 0.9, "triangle", 0.12); tone(784, 0.05, 0.9, "sine", 0.07); }
+        else if (kind === "role") { tone(659, 0, 0.5, "triangle", 0.16); tone(988, 0.02, 0.6, "sine", 0.1); noise(0, 0.15, 0.08, 3000, 6000); }
+        else { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, i * 0.09, 0.5, "triangle", 0.14); }); tone(1568, 0.36, 0.7, "sine", 0.08); }
+      },
+      win: function () {
+        if (!ok()) return;
+        [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach(function (f, i) { tone(f, i * 0.09, 0.55, "triangle", 0.16); tone(f * 2, i * 0.09, 0.4, "sine", 0.04); });
+        [523.25, 659.25, 783.99].forEach(function (f) { tone(f, 0.45, 1.0, "sine", 0.1); });
+      },
+      lose: function () {
+        if (!ok()) return;
+        noise(0, 0.18, 0.25, 2500, 300);
+        [220, 174.6, 146.8, 110].forEach(function (f, i) { tone(f, 0.1 + i * 0.22, 0.5, "sawtooth", 0.08, f * 0.94); });
+        tone(55, 0.05, 0.9, "sine", 0.4, 32);
+      },
+      revive: function () {
+        if (!ok()) return;
+        tone(330, 0, 0.5, "sine", 0.14, 1320);
+        for (var i = 0; i < 5; i++) tone(1000 + i * 260, 0.08 * i, 0.2, "sine", 0.06);
+      },
+      sad: function () {
+        if (!ok()) return;
+        [311, 293, 277].forEach(function (f, i) { tone(f, i * 0.3, 0.28, "sawtooth", 0.07, f * 0.93); });
+        tone(262, 0.9, 0.9, "sawtooth", 0.08, 196);
+      },
+      alert: function () { if (!ok()) return; tone(880, 0, 0.12, "square", 0.07); tone(660, 0.14, 0.2, "square", 0.07); }
+    };
+  })();
+
+  /* ---------- Parçacık efektleri (tuval). Görsel rastgelelik ayrı bir üreteçle yapılır. ---------- */
+  var VR = rng(20261010);
+  var fx = (function () {
+    var cv = $("fx"), g = cv.getContext("2d"), P = [], raf = 0, W = 0, H = 0;
+    function size() { var d = Math.min(2, window.devicePixelRatio || 1); W = window.innerWidth; H = window.innerHeight; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); }
+    size(); window.addEventListener("resize", size);
+    function loop() {
+      g.clearRect(0, 0, W, H);
+      var dt = 1 / 60;
+      for (var i = P.length - 1; i >= 0; i--) {
+        var p = P[i]; p.life -= dt;
+        if (p.life <= 0 || p.y > H + 40 || p.y < -200) { P.splice(i, 1); continue; }
+        p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+        g.save(); g.globalAlpha = Math.max(0, Math.min(1, p.life / p.max * 1.6)); g.translate(p.x, p.y); g.rotate(p.rot); g.fillStyle = p.c;
+        if (p.s === "rect") g.fillRect(-p.z, -p.z * 0.5, p.z * 2, p.z);
+        else if (p.s === "tri") { g.beginPath(); g.moveTo(0, -p.z); g.lineTo(p.z, p.z); g.lineTo(-p.z, p.z * 0.6); g.closePath(); g.fill(); }
+        else { g.beginPath(); g.arc(0, 0, p.z, 0, 6.283); g.fill(); }
+        g.restore();
+      }
+      if (P.length) raf = requestAnimationFrame(loop); else { raf = 0; g.clearRect(0, 0, W, H); }
+    }
+    function add(o) { P.push(o); if (!raf) raf = requestAnimationFrame(loop); }
+    function make(x, y, vx, vy, o, i) {
+      var life = (o.life || 1) * (0.7 + VR() * 0.6), cols = o.c || ["#ffe3a1", "#e2be6a", "#ffffff"];
+      add({ x: x, y: y, vx: vx, vy: vy, g: o.g === undefined ? 420 : o.g, rot: VR() * 6, vr: (VR() - 0.5) * 10, z: (o.z || 3) * (0.6 + VR() * 0.8), c: cols[i % cols.length], s: o.s || "dot", life: life, max: life });
+    }
+    return {
+      burst: function (x, y, o) {
+        o = o || {};
+        var n = Math.round((o.n || 40) * (reduce ? 0.3 : 1)), sp = o.sp || 260, i, a, v;
+        for (i = 0; i < n; i++) { a = VR() * 6.283; v = sp * (0.35 + VR() * 0.65); make(x, y, Math.cos(a) * v, Math.sin(a) * v - (o.up || 0), o, i); }
+      },
+      confetti: function () {
+        var n = Math.round(130 * (reduce ? 0.25 : 1)), i, o = { s: "rect", z: 5, life: 3.4, g: 140, c: ["#ffe3a1", "#e2be6a", "#5fe0a0", "#ffffff", "#9af0c8"] };
+        for (i = 0; i < n; i++) make(VR() * W, -10 - VR() * 220, (VR() - 0.5) * 140, 70 + VR() * 190, o, i);
+      },
+      shards: function (x, y) { this.burst(x, y, { n: 38, sp: 400, g: 900, z: 6, life: 1.4, s: "tri", c: ["#e0414f", "#8f1523", "#3a0710", "#ff8a93"] }); },
+      rise: function (x, y) { this.burst(x, y, { n: 30, sp: 90, g: -260, up: 150, z: 2.6, life: 1.3, c: ["#7fd8f0", "#c8f3ff", "#ffffff"] }); }
+    };
+  })();
+
+  /* ---------- Ana ekranda süzülen kor parçacıkları ---------- */
+  var amb = (function () {
+    var cv = $("amb"), g = cv.getContext("2d"), E = [], raf = 0, on = false, last = 0, W = 0, H = 0, R = rng(4242), i;
+    function size() { var d = Math.min(2, window.devicePixelRatio || 1); W = window.innerWidth; H = window.innerHeight; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); }
+    function mk(init) { return { x: R() * W, y: init ? R() * H : H + 10, s: 0.5 + R() * 1.6, v: 8 + R() * 22, ph: R() * 6.283, w: 6 + R() * 18 }; }
+    size(); window.addEventListener("resize", size);
+    for (i = 0; i < 46; i++) E.push(mk(true));
+    function loop(t) {
+      if (!on) return;
+      raf = requestAnimationFrame(loop);
+      if (t - last < 33) return;
+      var dt = Math.min(0.1, (t - last) / 1000); last = t;
+      g.clearRect(0, 0, W, H);
+      for (var k = 0; k < E.length; k++) {
+        var e = E[k]; e.y -= e.v * dt; e.x += Math.sin(t / 1400 + e.ph) * e.w * dt;
+        if (e.y < -10) E[k] = e = mk(false);
+        g.globalAlpha = 0.25 + 0.35 * Math.abs(Math.sin(t / 700 + e.ph));
+        g.fillStyle = "#f3c971"; g.beginPath(); g.arc(e.x, e.y, e.s, 0, 6.283); g.fill();
+      }
+      g.globalAlpha = 1;
+    }
+    return {
+      start: function () { if (reduce || on) return; on = true; last = 0; raf = requestAnimationFrame(loop); },
+      stop: function () { on = false; if (raf) cancelAnimationFrame(raf); raf = 0; g.clearRect(0, 0, W, H); }
+    };
+  })();
+  var CENTER = {};
+  var COMPASS = '<g transform="translate(905 52)" opacity="0.55" fill="none" stroke="#e2be6a" stroke-width="1.4"><circle r="30"/><circle r="22" stroke-dasharray="3 5"/><path d="M0-40V40M-40 0H40"/><path d="M0-44l5 14-5-5-5 5z" fill="#e2be6a"/></g>';
+  function regionPoint(id) { var m = $("rg-" + id).querySelector(".medal").getBoundingClientRect(); return [m.left + m.width / 2, m.top + m.height / 2]; }
+  function ringAt(id) {
+    var c = CENTER[id];
+    if (!c || reduce) return;
+    var el = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    el.setAttribute("class", "ring"); el.setAttribute("cx", c[0]); el.setAttribute("cy", c[1]); el.setAttribute("r", 40);
+    $("map").appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 1000);
+  }
+
+  function champ(n) { return CH.filter(function (c) { return c.n === n; })[0]; }
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (s && Array.isArray(s.sealed)) {
+        state.sealed = s.sealed.filter(function (n) { return !!champ(n); });
+        state.wins = +s.wins || 0;
+        state.losses = s.losses === undefined ? state.sealed.length : (+s.losses || 0);
+        state.sealRole = s.sealRole && typeof s.sealRole === "object" ? s.sealRole : {};
+        state.won = Array.isArray(s.won) ? s.won.filter(function (w) { return champ(w.n) && RN[w.role]; }) : [];
+        state.rights = Math.min(MAXR, Math.max(0, +s.rights || 0));
+        state.rightFrom = Array.isArray(s.rightFrom) ? s.rightFrom.filter(function (n) { return !!champ(n); }) : [];
+        state.pending = !!s.pending && state.rights >= MAXR && state.sealed.length > 0;
+        state.pity = !!s.pity;
+        var sb = s.bonus || {};
+        state.bonus = { shield: +!!sb.shield, guard: +!!sb.guard, pc: +!!sb.pc, pr: +!!sb.pr, fw: Math.max(0, +sb.fw || 0), nb: +!!sb.nb };
+      }
+    } catch (e) {}
+    state.sealed.forEach(function (n) { if (champ(n) && champ(n).roles.indexOf(state.sealRole[n]) < 0) state.sealRole[n] = champ(n).roles[0]; });
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function avail() { return CH.filter(function (c) { return state.sealed.indexOf(c.n) < 0; }); }
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, reduce ? Math.min(ms, 400) : ms); }); }
+  function show(id) {
+    VIEWS.forEach(function (v) { $(v).hidden = v !== id; });
+    document.body.classList.toggle("onmap", id === "vMap");
+    if (id === "vMap") { amb.start(); fitLabels(); centerMap(); } else amb.stop();
+    updateHome();
+  }
+  // Yan çubuk tuşları yalnızca harita ekranı boştayken görünür
+  function updateHome() {
+    var on = !$("vMap").hidden && !busy;
+    document.body.classList.toggle("idle", on);
+    if (!on) closeDrawers(true);
+  }
+  function syncAria() {
+    var l = document.body.classList.contains("l-open"), r = document.body.classList.contains("r-open");
+    $("tabWon").setAttribute("aria-expanded", l ? "true" : "false");
+    $("tabSeal").setAttribute("aria-expanded", r ? "true" : "false");
+    $("drWon").setAttribute("aria-hidden", l ? "false" : "true");
+    $("drSeal").setAttribute("aria-hidden", r ? "false" : "true");
+  }
+  function closeDrawers(force) {
+    if (state.pending && force !== true) return;
+    confirmIdx = -1;
+    document.body.classList.remove("l-open", "r-open");
+    syncAria();
+  }
+  function toggleDrawer(side) {
+    if (state.pending) return;
+    var cls = side + "-open", open = !document.body.classList.contains(cls);
+    sfx.whoosh();
+    document.body.classList.remove("l-open", "r-open");
+    if (open) document.body.classList.add(cls);
+    syncAria();
+  }
+
+  /* ---------- Çizim yardımcıları ---------- */
+  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function f1(n) { return (Math.round(n * 10) / 10).toString(); }
+  // Kapalı eğri: Catmull-Rom noktalarından Bezier yol üretir
+  function smooth(p) {
+    var n = p.length, d = "M" + f1(p[0][0]) + "," + f1(p[0][1]);
+    for (var i = 0; i < n; i++) {
+      var p0 = p[(i - 1 + n) % n], p1 = p[i], p2 = p[(i + 1) % n], p3 = p[(i + 2) % n];
+      d += "C" + f1(p1[0] + (p2[0] - p0[0]) / 6) + "," + f1(p1[1] + (p2[1] - p0[1]) / 6) + " " + f1(p2[0] - (p3[0] - p1[0]) / 6) + "," + f1(p2[1] - (p3[1] - p1[1]) / 6) + " " + f1(p2[0]) + "," + f1(p2[1]);
+    }
+    return d + "Z";
+  }
+  // Kıyıyı doğal göstermek için her kenara sapmış bir orta nokta ekler
+  function coast(ptsStr, seed) {
+    var r = rng(seed), p = ptsStr.split(" ").map(function (s) { return s.split(",").map(Number); }), out = [];
+    for (var i = 0; i < p.length; i++) {
+      var a = p[i], b = p[(i + 1) % p.length];
+      var dx = b[0] - a[0], dy = b[1] - a[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var off = (r() - 0.5) * 16;
+      out.push(a);
+      out.push([(a[0] + b[0]) / 2 - dy / len * off, (a[1] + b[1]) / 2 + dx / len * off]);
+    }
+    return out;
+  }
+
+  /* ---------- Harita ---------- */
+  function buildMap() {
+    var defs = '<defs>' +
+      '<linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1330"/><stop offset="1" stop-color="#17305a"/></linearGradient>' +
+      '<radialGradient id="vig" cx="0.5" cy="0.5" r="0.75"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/></radialGradient>' +
+      '<pattern id="pw" width="40" height="16" patternUnits="userSpaceOnUse"><path d="M0 8q10-8 20 0t20 0" fill="none" stroke="#d9c58f" stroke-opacity="0.06" stroke-width="1.2"/></pattern>' +
+      '<pattern id="pg" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M0 0H100M0 0V100" fill="none" stroke="#d9c58f" stroke-opacity="0.06" stroke-width="1"/></pattern>' +
+      '<pattern id="p-peaks" width="16" height="14" patternUnits="userSpaceOnUse"><path d="M2 12l5-9 5 9" fill="none" stroke="#000" stroke-opacity="0.22" stroke-width="1.2"/></pattern>' +
+      '<pattern id="p-dunes" width="24" height="10" patternUnits="userSpaceOnUse"><path d="M0 6q6-6 12 0t12 0" fill="none" stroke="#000" stroke-opacity="0.2" stroke-width="1.2"/></pattern>' +
+      '<pattern id="p-forest" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.3" fill="none" stroke="#000" stroke-opacity="0.24"/><circle cx="10" cy="9" r="2.3" fill="none" stroke="#000" stroke-opacity="0.24"/></pattern>' +
+      '<pattern id="p-dots" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="1.2" fill="#000" fill-opacity="0.25"/></pattern>' +
+      '<pattern id="p-grid" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M0 0H14M0 0V14" fill="none" stroke="#000" stroke-opacity="0.2" stroke-width="1"/></pattern>' +
+      '<pattern id="p-waves" width="20" height="10" patternUnits="userSpaceOnUse"><path d="M0 5q5-5 10 0t10 0" fill="none" stroke="#fff" stroke-opacity="0.25" stroke-width="1.2"/></pattern>' +
+      '<pattern id="p-hatch" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L8 0" fill="none" stroke="#000" stroke-opacity="0.22" stroke-width="1.2"/></pattern>' +
+      '</defs>';
+    var out = defs + '<rect x="-3000" y="-3000" width="7000" height="6640" fill="url(#pw)"/><rect x="-3000" y="-3000" width="7000" height="6640" fill="url(#pg)"/>' + COMPASS;
+    REGIONS.forEach(function (r, idx) {
+      var shape, cx, cy, ly, labelLines;
+      if (r.c) {
+        cx = r.c[0]; cy = r.c[1];
+        var rr = r.c[2];
+        shape = '<circle class="shore" cx="' + cx + '" cy="' + cy + '" r="' + (rr + 4) + '"/>' +
+          '<circle class="reg" cx="' + cx + '" cy="' + cy + '" r="' + rr + '" fill="' + r.land + '"/>' +
+          '<circle class="patl" cx="' + cx + '" cy="' + cy + '" r="' + rr + '" fill="url(#p-' + r.pat + ')"/>';
+        ly = cy + rr + 18;
+      } else {
+        var d = smooth(coast(r.pts, hash(r.id) + idx));
+        var pts = r.pts.split(" ").map(function (p) { return p.split(",").map(Number); });
+        cx = pts.reduce(function (a, p) { return a + p[0]; }, 0) / pts.length;
+        cy = pts.reduce(function (a, p) { return a + p[1]; }, 0) / pts.length - 12;
+        shape = '<path class="shore" d="' + d + '"/><path class="reg" d="' + d + '" fill="' + r.land + '"/><path class="patl" d="' + d + '" fill="url(#p-' + r.pat + ')"/>';
+        ly = cy + 38;
+      }
+      var fs = r.fs || 17, label;
+      if (r.two) {
+        var w = r.name.split(" ");
+        label = '<text class="lab" style="--fs:' + fs + '" x="' + f1(cx) + '" y="' + f1(ly - 6) + '">' + w[0] + '</text><text class="lab" style="--fs:' + fs + '" x="' + f1(cx) + '" y="' + f1(ly + 12) + '">' + w[1] + "</text>";
+      } else {
+        label = '<text class="lab" style="--fs:' + fs + '" x="' + f1(cx) + '" y="' + f1(ly) + '">' + r.name + "</text>";
+      }
+      var medal = '<g class="medal" transform="translate(' + f1(cx) + " " + f1(cy) + ')"><circle r="17"/><path d="' + GLYPH[r.id] + '" transform="translate(-9 -9) scale(0.75)"/></g>';
+      CENTER[r.id] = [cx, cy];
+      out += '<g class="rg" id="rg-' + r.id + '">' + shape + medal + label + "</g>";
+    });
+    $("map").innerHTML = out;
+  }
+  function eligibleIds() {
+    var m = {};
+    avail().forEach(function (c) { m[c.r] = true; });
+    return m;
+  }
+  function mapClear(on) {
+    var ids = eligibleIds();
+    REGIONS.forEach(function (r) {
+      var el = $("rg-" + r.id);
+      el.classList.remove("hot", "dim");
+      if (on) el.classList.toggle("off", !ids[r.id]);
+    });
+  }
+  // Etiketler ekranda en az ~15px okunur olsun
+  function fitLabels() {
+    var sv = $("map"), r = sv.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    var scale = Math.min(r.width / 1000, r.height / 640);
+    sv.style.setProperty("--ls", "0.8");
+  }
+  window.addEventListener("resize", function () { if (!$("vMap").hidden) fitLabels(); });
+  function mapBox() { return document.querySelector(".mapbox"); }
+  function centerMap() { var mb = mapBox(); if (mb.scrollWidth > mb.clientWidth) mb.scrollLeft = (mb.scrollWidth - mb.clientWidth) / 2; }
+  function scrollToRegion(id, always) {
+    var mb = mapBox();
+    if (mb.scrollWidth <= mb.clientWidth + 2) return;
+    var r = $("rg-" + id).getBoundingClientRect(), mr = mb.getBoundingClientRect();
+    var rel = (r.left + r.width / 2 - mr.left) / mb.clientWidth;
+    if (!always && rel > 0.2 && rel < 0.8) return;
+    mb.scrollTo({ left: mb.scrollLeft + (r.left + r.width / 2 - mr.left) - mb.clientWidth / 2, behavior: reduce ? "auto" : "smooth" });
+  }
+  function mapHot(id) {
+    scrollToRegion(id, false);
+    REGIONS.forEach(function (r) { $("rg-" + r.id).classList.toggle("hot", r.id === id); });
+  }
+  function mapSelect(id) {
+    scrollToRegion(id, true);
+    REGIONS.forEach(function (r) {
+      var el = $("rg-" + r.id);
+      el.classList.toggle("hot", r.id === id);
+      el.classList.toggle("dim", r.id !== id);
+    });
+  }
+
+  /* ---------- Bölge sahneleri (özgün illüstrasyon) ---------- */
+  var SCENES = {
+    Fr: { sky: ["#0b1d33", "#7fa7cf"], orb: ["#f4f8ff", 650, 80, 30], layers: [{ t: "peaks", c: "#a9c3de", y: 210, h: 150, snow: 1 }, { t: "peaks", c: "#7596b8", y: 250, h: 120, snow: 1 }, { t: "hills", c: "#e6eef7", y: 305, h: 40 }] },
+    De: { sky: ["#27496f", "#f2dca4"], orb: ["#fff4cf", 160, 100, 36], layers: [{ t: "hills", c: "#6e8bab", y: 215, h: 60 }, { t: "towers", c: "#dfe4ec", roof: "#4b78b9", y: 260, h: 90, pk: 34 }, { t: "hills", c: "#3f7d55", y: 305, h: 40 }] },
+    No: { sky: ["#2a0b12", "#a8383c"], orb: ["#ffb3a0", 600, 110, 40], layers: [{ t: "hills", c: "#4a1519", y: 235, h: 60 }, { t: "towers", c: "#1b0b0e", roof: "#12070a", y: 300, h: 140, pk: 60, w0: 22, wv: 20 }] },
+    Pi: { sky: ["#27324f", "#f0b868"], orb: ["#ffe2a8", 200, 90, 34], layers: [{ t: "gear", x: 620, y: 95, r: 34, c: "rgba(255,226,168,0.55)" }, { t: "towers", c: "#35405e", roof: "#35405e", y: 275, h: 170, pk: 50, w0: 12, wv: 10 }, { t: "towers", c: "#1d2540", roof: "#1d2540", y: 320, h: 110, pk: 40, w0: 14, wv: 12 }] },
+    Za: { sky: ["#10261c", "#5f9a45"], orb: ["#c9f28a", 600, 90, 30], layers: [{ t: "pipes", c: "#1b3426", y: 285, h: 150 }, { t: "mist", c: "#9be35a", y: 220, o: 0.28 }, { t: "pipes", c: "#0e1e15", y: 335, h: 110 }] },
+    Io: { sky: ["#2b3f66", "#f6c8d8"], orb: ["#fff0f4", 640, 90, 32], layers: [{ t: "peaks", c: "#7a98b4", y: 235, h: 110 }, { t: "trees", c: "#e89ab8", y: 290, h: 40 }, { t: "trees", c: "#4f8f66", y: 335, h: 30 }] },
+    Sh: { sky: ["#c9692c", "#f8d78a"], orb: ["#fff1c2", 400, 150, 70], layers: [{ t: "dunes", c: "#d9a05a", y: 250, h: 40 }, { t: "pyramids", c: "#b8763a", y: 275, items: [[560, 200, 120], [690, 110, 70]] }, { t: "dunes", c: "#c08340", y: 325, h: 30 }] },
+    Ta: { sky: ["#0d1030", "#6b4aa8"], stars: 1, orb: ["#f4ecff", 620, 70, 26], layers: [{ t: "peaks", c: "#4c3a85", y: 265, h: 200, snow: 1 }, { t: "peaks", c: "#2a2160", y: 310, h: 140 }] },
+    Ix: { sky: ["#10382a", "#c9ec8a"], orb: ["#fffbd0", 600, 80, 30], layers: [{ t: "trees", c: "#1f6b3f", y: 245, h: 70 }, { t: "pyramids", c: "#3e7a55", y: 295, items: [[300, 160, 100]] }, { t: "trees", c: "#0f4a2a", y: 340, h: 50 }] },
+    Bi: { sky: ["#12304a", "#f3a35c"], orb: ["#ffd9a0", 160, 120, 36], layers: [{ t: "waves", c: "#1f5f7e", y: 240, h: 12 }, { t: "masts", c: "#2a1c14", sail: "#e8d9b8", y: 245 }, { t: "waves", c: "#10425c", y: 295, h: 16 }] },
+    Sd: { sky: ["#04120f", "#2c5e52"], stars: 1, orb: ["#d6fff0", 640, 80, 26], layers: [{ t: "mist", c: "#8fe8c8", y: 200, o: 0.2 }, { t: "columns", c: "#122a25", y: 300, h: 130 }, { t: "mist", c: "#a8f5d8", y: 270, o: 0.28 }] },
+    Ba: { sky: ["#4a2a6e", "#f7c2ff"], orb: ["#fff0ff", 620, 90, 30], layers: [{ t: "hills", c: "#8b5fc0", y: 240, h: 50 }, { t: "mushrooms", c: "#ff7aa8", stem: "#f3e6d4", y: 305 }, { t: "hills", c: "#5c3a8e", y: 345, h: 25 }] },
+    Vo: { sky: ["#050212", "#3a0f6e"], stars: 1, layers: [{ t: "rift" }] },
+    Ru: { sky: ["#1a2a52", "#e9c46a"], stars: 1, orb: ["#fff6d0", 400, 120, 46], layers: [{ t: "hills", c: "#3b4d80", y: 265, h: 70 }, { t: "hills", c: "#1c2850", y: 325, h: 40 }] }
+  };
+  var LAYER = {
+    peaks: function (L, r) {
+      var h = L.h || 100, pts = ["-20,420"], snow = "", x = -20, st;
+      while (x < 840) {
+        st = 50 + r() * 50;
+        var py = L.y - h * (0.5 + 0.5 * r());
+        pts.push(f1(x) + "," + f1(py));
+        pts.push(f1(x + st / 2) + "," + f1(L.y - h * 0.2 * r()));
+        if (L.snow) {
+          var s = 12 + r() * 10, hh = 24;
+          snow += '<polygon points="' + f1(x) + "," + f1(py) + " " + f1(x - s) + "," + f1(py + hh) + " " + f1(x - s * 0.4) + "," + f1(py + hh * 0.78) + " " + f1(x) + "," + f1(py + hh * 1.05) + " " + f1(x + s * 0.4) + "," + f1(py + hh * 0.78) + " " + f1(x + s) + "," + f1(py + hh) + '" fill="#fff" fill-opacity="0.85"/>';
+        }
+        x += st;
+      }
+      pts.push("860,420");
+      return '<polygon points="' + pts.join(" ") + '" fill="' + L.c + '"/>' + snow;
+    },
+    hills: function (L, r) {
+      var pts = [[-80, 440]], x = -40, h = L.h || 60;
+      while (x < 860) { pts.push([x, L.y - r() * h]); x += 110; }
+      pts.push([900, 440]);
+      return '<path d="' + smooth(pts) + '" fill="' + L.c + '"/>';
+    },
+    dunes: function (L, r) {
+      var pts = [[-80, 440]], x = -40, h = L.h || 40;
+      while (x < 880) { pts.push([x, L.y - r() * h]); x += 190; }
+      pts.push([920, 440]);
+      return '<path d="' + smooth(pts) + '" fill="' + L.c + '"/>';
+    },
+    towers: function (L, r) {
+      var o = "", x = 10, w0 = L.w0 || 24, wv = L.wv || 22, pk = L.pk || 28;
+      while (x < 800) {
+        var w = w0 + r() * wv, h = 50 + r() * (L.h || 90), top = L.y - h;
+        o += '<rect x="' + f1(x) + '" y="' + f1(top) + '" width="' + f1(w) + '" height="' + f1(h + 140) + '" fill="' + L.c + '"/>';
+        o += '<polygon points="' + f1(x - 3) + "," + f1(top) + " " + f1(x + w / 2) + "," + f1(top - pk) + " " + f1(x + w + 3) + "," + f1(top) + '" fill="' + L.roof + '"/>';
+        if (w > 20) o += '<rect x="' + f1(x + w * 0.3) + '" y="' + f1(top + 14 + r() * 20) + '" width="4" height="7" fill="#ffe7a0" fill-opacity="0.75"/>';
+        x += w + 6 + r() * 20;
+      }
+      return o;
+    },
+    gear: function (L) {
+      return '<circle cx="' + L.x + '" cy="' + L.y + '" r="' + L.r + '" fill="none" stroke="' + L.c + '" stroke-width="9" stroke-dasharray="7 7"/><circle cx="' + L.x + '" cy="' + L.y + '" r="' + (L.r - 9) + '" fill="none" stroke="' + L.c + '" stroke-width="3"/>';
+    },
+    pipes: function (L, r) {
+      var o = "", x = 0;
+      while (x < 800) {
+        var w = 16 + r() * 16, h = 40 + r() * (L.h || 100), top = L.y - h;
+        o += '<rect x="' + f1(x) + '" y="' + f1(top) + '" width="' + f1(w) + '" height="' + f1(h + 120) + '" fill="' + L.c + '"/><rect x="' + f1(x - 3) + '" y="' + f1(top - 6) + '" width="' + f1(w + 6) + '" height="8" fill="' + L.c + '"/>';
+        x += w + 8 + r() * 26;
+      }
+      return o;
+    },
+    trees: function (L, r) {
+      var o = "";
+      for (var x = -10; x < 830; x += 26) o += '<ellipse cx="' + x + '" cy="' + f1(L.y - r() * (L.h || 40)) + '" rx="26" ry="30" fill="' + L.c + '"/>';
+      return o + '<rect x="-20" y="' + (L.y + 10) + '" width="860" height="200" fill="' + L.c + '"/>';
+    },
+    waves: function (L, r) {
+      var d = "M-20," + L.y + " q50,-" + f1(8 + r() * (L.h || 12)) + " 100,0";
+      for (var i = 0; i < 9; i++) d += " t100,0";
+      return '<path d="' + d + ' V420 H-20 Z" fill="' + L.c + '"/>';
+    },
+    masts: function (L, r) {
+      var o = "", xs = [90, 330, 560];
+      xs.forEach(function (x) {
+        var y = L.y - r() * 10;
+        o += '<polygon points="' + x + "," + y + " " + (x + 80) + "," + y + " " + (x + 66) + "," + (y + 16) + " " + (x + 14) + "," + (y + 16) + '" fill="' + L.c + '"/>';
+        o += '<line x1="' + (x + 40) + '" y1="' + y + '" x2="' + (x + 40) + '" y2="' + (y - 72) + '" stroke="' + L.c + '" stroke-width="3"/>';
+        o += '<polygon points="' + (x + 42) + "," + (y - 68) + " " + (x + 42) + "," + (y - 12) + " " + (x + 76) + "," + (y - 18) + '" fill="' + L.sail + '"/>';
+      });
+      return o;
+    },
+    columns: function (L, r) {
+      var o = "";
+      for (var x = 10; x < 800; x += 40 + r() * 40) {
+        var h = 40 + r() * (L.h || 100), t = L.y - h;
+        o += '<polygon points="' + x + "," + f1(t) + " " + (x + 5) + "," + f1(t - 7) + " " + (x + 11) + "," + f1(t + 3) + " " + (x + 18) + "," + f1(t - 4) + " " + (x + 18) + "," + (L.y + 140) + " " + x + "," + (L.y + 140) + '" fill="' + L.c + '"/>';
+      }
+      return o;
+    },
+    mushrooms: function (L, r) {
+      var o = "";
+      for (var x = 60; x < 780; x += 110 + r() * 60) {
+        var y = L.y - 30 - r() * 40, rx = 26 + r() * 14;
+        o += '<rect x="' + f1(x - 6) + '" y="' + f1(y) + '" width="12" height="' + f1(L.y - y + 60) + '" fill="' + L.stem + '"/>';
+        o += '<path d="M' + f1(x - rx) + " " + f1(y) + " A" + f1(rx) + " " + f1(rx * 0.78) + " 0 0 1 " + f1(x + rx) + " " + f1(y) + ' Z" fill="' + L.c + '"/>';
+        o += '<circle cx="' + f1(x - rx * 0.3) + '" cy="' + f1(y - rx * 0.35) + '" r="4" fill="#fff" fill-opacity="0.85"/><circle cx="' + f1(x + rx * 0.35) + '" cy="' + f1(y - rx * 0.2) + '" r="3" fill="#fff" fill-opacity="0.85"/>';
+      }
+      return o;
+    },
+    pyramids: function (L) {
+      var o = "";
+      L.items.forEach(function (it) {
+        o += '<polygon points="' + (it[0] - it[1] / 2) + "," + L.y + " " + it[0] + "," + (L.y - it[2]) + " " + (it[0] + it[1] / 2) + "," + L.y + '" fill="' + L.c + '"/>';
+      });
+      return o + '<rect x="-20" y="' + L.y + '" width="860" height="200" fill="' + L.c + '"/>';
+    },
+    mist: function (L) {
+      var id = "mg" + (++gid);
+      return '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + L.c + '" stop-opacity="0"/><stop offset="1" stop-color="' + L.c + '" stop-opacity="' + L.o + '"/></linearGradient></defs><rect x="0" y="' + L.y + '" width="800" height="160" fill="url(#' + id + ')"/>';
+    },
+    rift: function () {
+      var o = '<defs><radialGradient id="rg0"><stop offset="0" stop-color="#d9a6ff"/><stop offset="1" stop-color="#6a1fc0" stop-opacity="0"/></radialGradient></defs><ellipse cx="400" cy="170" rx="260" ry="120" fill="url(#rg0)" opacity="0.55"/>';
+      for (var i = 0; i < 9; i++) o += '<ellipse cx="400" cy="170" rx="' + (20 + i * 36) + '" ry="' + (8 + i * 14) + '" fill="none" stroke="hsl(' + (275 + i * 6) + ' 80% ' + (70 - i * 5) + '%)" stroke-opacity="' + f1(0.9 - i * 0.09) + '" stroke-width="3"/>';
+      return o + '<ellipse cx="400" cy="170" rx="16" ry="7" fill="#fff"/>';
+    }
+  };
+  function scene(id) {
+    var S = SCENES[id], r = rng(hash(id) + 7);
+    var o = '<svg viewBox="0 0 800 360" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + S.sky[0] + '"/><stop offset="1" stop-color="' + S.sky[1] + '"/></linearGradient></defs><rect width="800" height="360" fill="url(#sk)"/>';
+    if (S.stars) for (var i = 0; i < 70; i++) o += '<circle cx="' + f1(r() * 800) + '" cy="' + f1(r() * 220) + '" r="' + f1(0.6 + r() * 1.4) + '" fill="#fff" fill-opacity="' + f1(0.4 + r() * 0.6) + '"/>';
+    if (S.orb) o += '<circle cx="' + S.orb[1] + '" cy="' + S.orb[2] + '" r="' + (S.orb[3] + 18) + '" fill="' + S.orb[0] + '" fill-opacity="0.18"/><circle cx="' + S.orb[1] + '" cy="' + S.orb[2] + '" r="' + S.orb[3] + '" fill="' + S.orb[0] + '"/>';
+    S.layers.forEach(function (L) { o += LAYER[L.t](L, r); });
+    return o + "</svg>";
+  }
+
+  /* ---------- Şampiyon arması (isimden üretilen özgün tasarım) ---------- */
+  function monogram(name) {
+    var w = name.replace(/[.']/g, "").split(" ").filter(Boolean);
+    return (w.length > 1 ? w[0][0] + w[1][0] : w[0][0]).toUpperCase();
+  }
+  function crest(c, role, width) {
+    var id = "c" + (++gid), r = rng(hash(c.n)), h = ROLE_H[role];
+    var shield = "M10 8H150V132Q150 172 80 194Q10 172 10 132Z";
+    var rays = "", n = 8 + Math.floor(r() * 9), i, a;
+    for (i = 0; i < n; i++) {
+      a = i / n * 2 * Math.PI;
+      rays += '<line x1="80" y1="108" x2="' + f1(80 + Math.cos(a) * 130) + '" y2="' + f1(108 + Math.sin(a) * 130) + '"/>';
+    }
+    var k = 3 + Math.floor(r() * 6), rot = r() * 6.283, pts = [];
+    for (i = 0; i < k; i++) { a = rot + i / k * 2 * Math.PI; pts.push(f1(80 + Math.cos(a) * 46) + "," + f1(108 + Math.sin(a) * 46)); }
+    return '<svg viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<defs><linearGradient id="' + id + 'g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(' + h + ' 62% 48%)"/><stop offset="1" stop-color="hsl(' + h + ' 66% 20%)"/></linearGradient><clipPath id="' + id + 'k"><path d="' + shield + '"/></clipPath></defs>' +
+      '<path d="' + shield + '" fill="url(#' + id + 'g)"/>' +
+      '<g clip-path="url(#' + id + 'k)"><g stroke="#fff" stroke-opacity="0.16" stroke-width="3">' + rays + '</g>' +
+      '<polygon points="' + pts.join(" ") + '" fill="rgba(0,0,0,0.22)" stroke="#f1dd9a" stroke-opacity="0.8" stroke-width="2"/>' +
+      '<circle cx="80" cy="108" r="30" fill="none" stroke="#f1dd9a" stroke-opacity="0.55" stroke-width="1.5"/></g>' +
+      '<path d="' + shield + '" fill="none" stroke="#f1dd9a" stroke-width="5"/>' +
+      '<text x="80" y="126" text-anchor="middle" font-size="58" font-weight="900" fill="#fff" stroke="rgba(0,0,0,0.4)" stroke-width="3" paint-order="stroke" style="font-family:var(--font-display)">' + monogram(c.n) + '</text>' +
+      '<circle cx="80" cy="34" r="15" fill="#0c1224" stroke="#f1dd9a" stroke-width="2"/><path d="' + GLYPH[c.r] + '" transform="translate(70 24) scale(0.83)" fill="none" stroke="#efe5c4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>';
+  }
+
+  // Eşit şans: adaylar arasında düzgün dağılımla seçilmiş bir sonuca yavaşlayan bir tarama yapar.
+  function spin(items, final, tick, kind) {
+    return new Promise(function (res) {
+      var my = runId;
+      var steps = reduce ? 3 : 24 + Math.floor(Math.random() * 8);
+      var seq = [], prev = null, i, c;
+      for (i = 0; i < steps - 1; i++) {
+        do { c = pick(items); } while (items.length > 1 && c === prev);
+        seq.push(c); prev = c;
+      }
+      seq.push(final);
+      var k = 0;
+      (function next() {
+        if (my !== runId) return;
+        tick(seq[k]);
+        sfx.tick(kind, k / Math.max(1, seq.length - 1));
+        if (k === seq.length - 1) return res();
+        var d = reduce ? 90 : 55 + 340 * Math.pow(k / (steps - 1), 3);
+        k++; setTimeout(next, d);
+      })();
+    });
+  }
+
+  /* ---------- Rol bonusları ---------- */
+  function choose(title, sub, opts) {
+    return new Promise(function (res) {
+      $("choiceT").textContent = title; $("choiceP").textContent = sub;
+      var box = $("choiceOpts");
+      box.innerHTML = opts.map(function (o, i) { return '<button class="copt" data-i="' + i + '"><b>' + o.a + "</b><span>" + o.b + "</span></button>"; }).join("");
+      $("choice").hidden = false; sfx.alert();
+      var f = box.querySelector("button"); if (f) f.focus();
+      box.onclick = function (e) {
+        var b = e.target.closest("button[data-i]"); if (!b) return;
+        box.onclick = null; $("choice").hidden = true; sfx.click();
+        res(+b.getAttribute("data-i"));
+      };
+    });
+  }
+  function renderChips() {
+    var B = state.bonus, out = [];
+    function chip(t, d, h) { out.push('<span class="bchip" style="--rh:' + h + '" title="' + d + '">' + t + "</span>"); }
+    if (B.shield) chip("Kalkan", "Şampiyonu elenmekten korur", ROLE_H.T);
+    if (B.guard) chip("Koruma", "Bir sonraki kaybında elenmezsin", ROLE_H.S);
+    if (B.pc) chip("Aday seçimi", "Bir sonraki turda 2 şampiyondan seçersin", ROLE_H.N);
+    if (B.pr) chip("Bölge seçimi", "Bir sonraki turda 2 bölgeden seçersin", ROLE_H.B);
+    if (B.fw % 3) chip("Savaşçı " + (B.fw % 3) + "/3", "3 galibiyette +1 hak", ROLE_H.F);
+    if (B.nb) chip("Moral düşük", "Bir sonraki galibiyette rol ödülü yok", 355);
+    $("bonus").innerHTML = out.join("");
+  }
+  function giveRight() {
+    if (state.rights < MAXR) { state.rights++; return " · +1 diriltme hakkı"; }
+    if (state.sealed.length) { state.pending = true; return " · diriltme hakkın dolu"; }
+    state.pity = true; return " · diriltme hakkın dolu";
+  }
+
+  /* ---------- Akış ---------- */
+  function setBusy(b) { busy = b; $("btnRegion").disabled = b || state.pending || state.pity || !Object.keys(eligibleIds()).length; updateHome(); }
+
+  async function startRun() {
+    var my = ++runId;
+    homeMsg = "";
+    var ids = eligibleIds(), regs = REGIONS.filter(function (r) { return ids[r.id]; });
+    if (!regs.length) return;
+    run = {};
+    show("vMap"); mapClear(true); setBusy(true);
+    $("mapNote").textContent = "Bölge aranıyor...";
+    var final;
+    if (state.bonus.pr > 0 && regs.length > 1) {
+      var ra = pick(regs), rb2 = pick(regs.filter(function (r) { return r !== ra; }));
+      function cnt(r) { return avail().filter(function (c) { return c.r === r.id; }).length + " şampiyon"; }
+      var ci = await choose("Bölgeni seç", "Büyücü ödülü: iki bölgeden birini seç.", [{ a: ra.name, b: cnt(ra) }, { a: rb2.name, b: cnt(rb2) }]);
+      if (my !== runId) return;
+      final = ci ? rb2 : ra;
+      state.bonus.pr = 0; save(); renderChips();
+    } else {
+      final = pick(regs);
+      await spin(regs.map(function (r) { return r.id; }), final.id, mapHot, "region");
+      if (my !== runId) return;
+    }
+    mapSelect(final.id);
+    run.region = final.id;
+    sfx.lock("region"); ringAt(final.id);
+    var pt = regionPoint(final.id); fx.burst(pt[0], pt[1], { n: 46, sp: 300 });
+    await wait(1000); if (my !== runId) return;
+    var n = avail().filter(function (c) { return c.r === final.id; }).length;
+    $("scene").innerHTML = scene(final.id);
+    $("regName").textContent = final.name;
+    $("regSub").textContent = n + " şampiyon";
+    show("vRegion");
+    await wait(2800); if (my !== runId) return;
+    buildRoles();
+    show("vRole");
+    $("btnRole").disabled = false;
+    setBusy(false);
+  }
+
+  function roleList() {
+    var pool = avail().filter(function (c) { return c.r === run.region; });
+    return ROLE_ORDER.map(function (k) {
+      return { k: k, n: pool.filter(function (c) { return c.roles.indexOf(k) > -1; }).length };
+    }).filter(function (x) { return x.n > 0; });
+  }
+  var RICON = {
+    F: '<path d="M19 5L9 15"/><path d="M15.5 4.5L19.5 4.5L19.5 8.5"/><path d="M6.5 12.5l5 5"/><path d="M9 15l-4.5 4.5"/>',
+    N: '<circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.6"/><path d="M12 2.5v5M12 16.5v5M2.5 12h5M16.5 12h5"/>',
+    D: '<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.6-7 10-7 10z"/>',
+    T: '<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M12 7v10"/>',
+    S: '<path d="M12 3l2.6 9L12 14.2 9.4 12z"/><path d="M8 14.5h8"/><path d="M12 14.5V21"/>',
+    B: '<path d="M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>'
+  };
+  var RWIN = { D: "+1 diriltme hakkı", F: "3 galibiyette +1 hak", T: "Kalkan", N: "2 adaydan seç", S: "Koruma", B: "2 bölgeden seç" };
+  var RLOSE = { D: "Moral düşer", F: "Sayaç sıfırlanır", T: "Bir şampiyon daha elenir", N: "Seçim bonusları silinir", S: "−1 hak", B: "Kalkan ve koruma silinir" };
+  function buildRoles() {
+    $("roleBg").innerHTML = scene(run.region);
+    $("roleHead").textContent = REG[run.region].name + " bölgesindeki roller";
+    $("roles").innerHTML = roleList().map(function (x, idx) {
+      return '<div class="role" id="rc-' + x.k + '" style="--rh:' + ROLE_H[x.k] + ";--i:" + idx + '"><i class="rico"><svg viewBox="0 0 24 24" aria-hidden="true">' + RICON[x.k] + "</svg></i><b>" + RN[x.k] + '</b><em class="rcount">' + x.n + ' şampiyon</em><div class="rrules"><p class="g"><small>Kazanırsan</small>' + RWIN[x.k] + '</p><p class="r"><small>Kaybedersen</small>' + RLOSE[x.k] + "</p></div></div>";
+    }).join("");
+  }
+
+  async function startRole() {
+    if (busy) return;
+    var my = runId;
+    busy = true; $("btnRole").disabled = true;
+    var list = roleList(), ids = list.map(function (x) { return x.k; });
+    var final = pick(ids);
+    ids.forEach(function (k) { $("rc-" + k).classList.remove("hot", "dim"); });
+    await spin(ids, final, function (k) {
+      ids.forEach(function (j) { $("rc-" + j).classList.toggle("hot", j === k); });
+    }, "role");
+    if (my !== runId) return;
+    ids.forEach(function (j) { var el = $("rc-" + j); el.classList.toggle("dim", j !== final); });
+    run.role = final;
+    var rel = $("rc-" + final); rel.classList.add("lock");
+    sfx.lock("role");
+    var rb = rel.getBoundingClientRect();
+    fx.burst(rb.left + rb.width / 2, rb.top + rb.height * 0.4, { n: 40, sp: 280, c: ["hsl(" + ROLE_H[final] + " 80% 65%)", "#ffffff", "#ffe3a1"] });
+    await wait(1000); if (my !== runId) return;
+    var cnt = list.filter(function (x) { return x.k === final; })[0].n;
+    $("roleName").textContent = RN[final];
+    $("roleName").style.color = "hsl(" + ROLE_H[final] + " 58% var(--role-l))";
+    $("roleSub").textContent = REG[run.region].name + " · " + cnt + " şampiyon";
+    show("vRoleName");
+    await wait(2200); if (my !== runId) return;
+    await runChamp(my);
+  }
+
+  async function runChamp(my, excl) {
+    var pool = avail().filter(function (c) { return c.r === run.region && c.roles.indexOf(run.role) > -1 && c.n !== excl; });
+    var anyRole = false;
+    if (!pool.length) { pool = avail().filter(function (c) { return c.r === run.region && c.n !== excl; }); anyRole = true; }
+    $("champHead").textContent = REG[run.region].name + (anyRole ? "" : " · " + RN[run.role]);
+    $("champs").innerHTML = pool.map(function (c, i) { return '<div class="cc" id="cc-' + i + '"><span class="mini">' + crest(c, anyRole ? c.roles[0] : run.role) + "</span>" + c.n + "</div>"; }).join("");
+    show("vChamp");
+    var final = pick(pool);
+    if (!excl && state.bonus.pc > 0 && pool.length > 1) {
+      var ca = final, cb = pick(pool.filter(function (c) { return c !== ca; }));
+      $("champNote").textContent = "Aday seçimi";
+      var cix = await choose("Şampiyonunu seç", "Nişancı ödülü: iki adaydan birini seç.", [{ a: ca.n, b: REG[ca.r].name }, { a: cb.n, b: REG[cb.r].name }]);
+      if (my !== runId) return;
+      final = cix ? cb : ca;
+      state.bonus.pc = 0; save(); renderChips();
+      var fx2 = pool.indexOf(final);
+      pool.forEach(function (_, j) { $("cc-" + j).classList.toggle("dim", j !== fx2); });
+      await wait(900); if (my !== runId) return;
+    } else if (pool.length === 1) {
+      $("champNote").textContent = "Bu rolde tek şampiyon var.";
+      await wait(1600); if (my !== runId) return;
+    } else {
+      for (var s = 3; s >= 1; s--) {
+        $("champNote").textContent = "Şampiyon " + s + " saniye içinde seçilecek";
+        await wait(1000); if (my !== runId) return;
+      }
+      $("champNote").textContent = "Seçiliyor...";
+      var idx = pool.map(function (_, i) { return i; });
+      var fi = pool.indexOf(final);
+      await spin(idx, fi, function (i) {
+        idx.forEach(function (j) { $("cc-" + j).classList.toggle("hot", j === i); });
+      }, "champ");
+      if (my !== runId) return;
+      idx.forEach(function (j) { $("cc-" + j).classList.toggle("dim", j !== fi); });
+      await wait(1100); if (my !== runId) return;
+    }
+    if (anyRole) run.role = final.roles[0];
+    run.champ = final;
+    sfx.lock("champ");
+    $("resCrest").innerHTML = crest(final, run.role);
+    $("resName").textContent = final.n;
+    $("resRegion").textContent = REG[final.r].name;
+    $("resRole").textContent = RN[run.role];
+    $("resNote").textContent = "Maçı oyna, sonucu işle.";
+    $("btnWin").disabled = false; $("btnLose").disabled = false;
+    show("vResult");
+    setTimeout(function () {
+      if (my !== runId) return;
+      var cr = $("resCrest").getBoundingClientRect();
+      fx.burst(cr.left + cr.width / 2, cr.top + cr.height / 2, { n: 60, sp: 340, up: 80 });
+    }, 350);
+  }
+
+  async function finish(won) {
+    if (!run.champ || run.done) return;
+    run.done = true;
+    var my = runId, n = run.champ.n, f = $("flash"), extra = "", ft = won ? "Kazandın" : "Elendi", fsub = "";
+    if (won) {
+      state.wins++;
+      var hit = state.won.filter(function (w) { return w.n === n && w.role === run.role; })[0];
+      if (hit) hit.k++; else state.won.push({ n: n, role: run.role, k: 1 });
+      var B = state.bonus;
+      if (B.nb) { B.nb = 0; extra = " · moral düşüktü, rol ödülü yok"; }
+      else if (run.role === "D") {
+        if (state.rightFrom.indexOf(n) < 0) { state.rightFrom.push(n); extra = giveRight(); }
+      } else if (run.role === "T") { B.shield = 1; extra = " · +kalkan"; }
+      else if (run.role === "N") { B.pc = 1; extra = " · +aday seçimi"; }
+      else if (run.role === "S") { B.guard = 1; extra = " · +koruma"; }
+      else if (run.role === "B") { B.pr = 1; extra = " · +bölge seçimi"; }
+      else if (run.role === "F") {
+        B.fw++;
+        extra = B.fw % 3 === 0 ? giveRight() + " (3 Savaşçı galibiyeti)" : " · Savaşçı " + (B.fw % 3) + "/3";
+      }
+      fsub = n + " listede kalıyor" + extra;
+    } else {
+      state.losses++;
+      var B2 = state.bonus, cleared = false;
+      if (run.role === "B" && (B2.shield || B2.guard)) { B2.shield = 0; B2.guard = 0; cleared = true; }
+      if (run.role === "N" && (B2.pc || B2.pr)) { B2.pc = 0; B2.pr = 0; cleared = true; }
+      var prot = "";
+      if (B2.shield) { B2.shield = 0; prot = "kalkanla"; }
+      else if (B2.guard) { B2.guard = 0; prot = "korumayla"; }
+      if (prot) { ft = "Korundun"; fsub = n + " " + prot + " elenmedi (mağlubiyet yazıldı)"; }
+      else {
+        if (state.sealed.indexOf(n) < 0) state.sealed.push(n);
+        state.sealRole[n] = run.role;
+        fsub = n + " listeden çıktı" + (cleared ? " · bonuslar silindi" : "");
+      }
+      // Rol cezaları koruma olsa da uygulanır
+      if (run.role === "T") {
+        var oth = avail().filter(function (c) { return c.r === run.champ.r && c.n !== n; });
+        if (oth.length) { var x = pick(oth); state.sealed.push(x.n); state.sealRole[x.n] = x.roles[0]; fsub += " · " + x.n + " da elendi"; }
+      } else if (run.role === "S") {
+        if (state.rights > 0) { state.rights--; fsub += " · −1 hak"; }
+      } else if (run.role === "D") { B2.nb = 1; fsub += " · moral düştü"; }
+      else if (run.role === "F") { if (B2.fw) { B2.fw = 0; fsub += " · Savaşçı sayacı sıfırlandı"; } }
+    }
+    $("btnWin").disabled = true; $("btnLose").disabled = true;
+    save();
+    f.className = "flash " + (won ? "win" : "lose");
+    $("flashTxt").textContent = ft;
+    $("flashSub").textContent = fsub;
+    void f.offsetWidth;
+    f.classList.add("on");
+    if (won) { sfx.win(); fx.confetti(); }
+    else {
+      sfx.lose();
+      var vr = $("vResult"), cr2 = $("resCrest").getBoundingClientRect();
+      vr.classList.remove("shake"); void vr.offsetWidth; vr.classList.add("shake");
+      setTimeout(function () { vr.classList.remove("shake"); }, 600);
+      fx.shards(cr2.left + cr2.width / 2, cr2.top + cr2.height / 2);
+    }
+    await wait(2900); if (my !== runId) return;
+    busy = false;
+    show("vMap"); setBusy(false); renderStats(); mapClear(true);
+    try { window.scrollTo(0, 0); } catch (e) {}
+    await wait(200); if (my !== runId) return;
+    f.classList.remove("on");
+    if (state.pending) openPick();
+    else if (state.pity) openPity();
+  }
+
+  /* ---------- Genel ---------- */
+  function sealAct(i) {
+    if (state.pending) return '<button class="unseal pick" data-i="' + i + '">Bunu dirilt</button>';
+    if (state.rights < 1) return '<button class="unseal" disabled>Hak yok</button>';
+    if (confirmIdx === i) return '<button class="unseal ok" data-i="' + i + '">Onayla (−1 hak)</button>';
+    return '<button class="unseal" data-i="' + i + '">Dirilt</button>';
+  }
+  function revive(i, free) {
+    var n = state.sealed[i];
+    if (n === undefined) return null;
+    if (!free) { if (state.rights < 1) return null; state.rights--; }
+    state.sealed.splice(i, 1);
+    delete state.sealRole[n];
+    return n;
+  }
+  // Hak doluyken gelen 6. hak: sağ liste açılır, seçim yapılır ya da hak boşa gider
+  function openPick() {
+    sfx.alert();
+    document.body.classList.add("picking", "r-open");
+    document.body.classList.remove("l-open");
+    syncAria(); renderStats();
+  }
+  function endPick() {
+    state.pending = false;
+    document.body.classList.remove("picking");
+    closeDrawers(true);
+    save(); renderStats();
+  }
+  function randomEliminate() {
+    var pool = avail();
+    homeMsg = "";
+    if (pool.length) {
+      var c = pick(pool), role = pick(c.roles);
+      state.sealed.push(c.n); state.sealRole[c.n] = role;
+      homeMsg = c.n + " rastgele elendi.";
+    }
+  }
+  function declinePick() { randomEliminate(); endPick(); }
+  // Hak dolu ve elenenler listesi boşken: uyarı çıkar, tamamlanınca rastgele eleme yapılır
+  function openPity() { sfx.sad(); $("pity").hidden = false; $("pityOk").focus(); renderStats(); }
+  function closePity() {
+    randomEliminate();
+    state.pity = false;
+    $("pity").hidden = true;
+    save(); renderStats();
+  }
+  // Tek seferlik test konumu: hak 5/5, elenenler listesi boş
+  function oneTimeTest() {
+    try {
+      if (localStorage.getItem("muhur-secici-test1")) return;
+      localStorage.setItem("muhur-secici-test1", "1");
+    } catch (e) { return; }
+    state.rights = MAXR; state.sealed = []; state.sealRole = {}; state.rightFrom = []; state.pending = false; state.pity = false;
+    homeMsg = "Test konumu: hak 5/5, elenenler listesi boş.";
+    save();
+  }
+  function itemHTML(n, role, extra, action) {
+    var c = champ(n);
+    return '<li class="it"><span class="mini2">' + crest(c, role) + '</span><div class="it-t"><b>' + n + extra + '</b><span class="it-s"><span class="rtag" style="--rh:' + ROLE_H[role] + '">' + RN[role] + "</span><span>" + REG[c.r].name + "</span></span></div>" + action + "</li>";
+  }
+  function renderStats() {
+    var played = state.wins + state.losses;
+    $("sRemain").textContent = avail().length;
+    $("sPlayed").textContent = played;
+    $("sWL").innerHTML = '<span class="gw">' + state.wins + '</span>–<span class="gl">' + state.losses + "</span>";
+    $("sRate").textContent = played ? "%" + (state.wins / played * 100).toFixed(1).replace(".", ",") : "—";
+    $("nWon").textContent = state.won.length;
+    $("nSeal").textContent = state.sealed.length;
+    $("sRights").textContent = state.rights + "/" + MAXR;
+    renderChips();
+    $("rightsNote").className = state.pending ? "rnote pickbox" : "rnote";
+    $("rightsNote").innerHTML = state.pending
+      ? "<span><b>Diriltme hakkın dolu (" + MAXR + "/" + MAXR + ").</b> Bir şampiyon seç ve diriltmek için kullan. Seçmezsen 1 hak boşa gider ve rastgele bir şampiyon elenir.</span>" + '<button class="lose" data-act="decline">Kullanmayacağım</button>'
+      : "<span>Diriltme hakkı: <b>" + state.rights + "/" + MAXR + "</b>. Destek rolünde yeni bir şampiyonla ya da her 3. Savaşçı galibiyetinde +1. Diriltmek 1 hak harcar.</span>";
+    $("wonList").innerHTML = state.won.length
+      ? state.won.map(function (w) { return itemHTML(w.n, w.role, w.k > 1 ? "<i>×" + w.k + "</i>" : "", ""); }).reverse().join("")
+      : '<li class="empty">Henüz kazanılan şampiyon yok.</li>';
+    $("sealList").innerHTML = state.sealed.length
+      ? state.sealed.map(function (n, i) { return itemHTML(n, state.sealRole[n], "", sealAct(i)); }).reverse().join("")
+      : '<li class="empty">Henüz elenen şampiyon yok.</li>';
+    var any = Object.keys(eligibleIds()).length > 0;
+    if (!busy) $("btnRegion").disabled = !any || state.pending || state.pity;
+    if ($("vMap").hidden === false && !busy) {
+      $("mapNote").textContent = homeMsg || (any ? "" : "Tüm şampiyonlar elendi. Listeyi sıfırlayabilirsin.");
+      mapClear(true);
+    }
+  }
+
+  $("btnRegion").addEventListener("click", function () { if (!busy) { sfx.click(); startRun(); } });
+  $("btnRole").addEventListener("click", function () { sfx.click(); startRole(); });
+  $("btnWin").addEventListener("click", function () { sfx.click(); finish(true); });
+  $("btnLose").addEventListener("click", function () { sfx.click(); finish(false); });
+  // Tekrar çevir: animasyonsuz; yalnızca aynı bölgeden rastgele başka bir şampiyonu anında seçer (rol şampiyonun kendi rolü olur)
+  function reroll() {
+    if (!run.champ || run.done) return;
+    var prev = run.champ.n;
+    var pool = avail().filter(function (c) { return c.r === run.region && c.n !== prev; });
+    if (!pool.length) { $("resNote").textContent = "Bu bölgede başka şampiyon yok."; return; }
+    var f = pick(pool);
+    run.champ = f; run.role = f.roles[0];
+    $("resRole").textContent = RN[run.role];
+    $("resCrest").innerHTML = crest(f, run.role);
+    $("resName").textContent = f.n;
+    $("resRegion").textContent = REG[f.r].name;
+    $("resNote").textContent = "Maçı oyna, sonucu işle.";
+    sfx.lock("champ");
+    var cr = $("resCrest").getBoundingClientRect();
+    fx.burst(cr.left + cr.width / 2, cr.top + cr.height / 2, { n: 30, sp: 260, up: 60 });
+  }
+  $("btnAgain").addEventListener("click", function () { sfx.click(); reroll(); });
+  $("sealList").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-i]");
+    if (!b) return;
+    var i = +b.getAttribute("data-i"), rc = b.getBoundingClientRect();
+    if (state.pending) {
+      var d = revive(i, true);
+      if (d) { homeMsg = d + " diriltildi."; sfx.revive(); fx.rise(rc.left + rc.width / 2, rc.top + rc.height / 2); endPick(); }
+      return;
+    }
+    if (confirmIdx !== i) { confirmIdx = i; sfx.click(); renderStats(); return; }
+    var r = revive(i, false);
+    confirmIdx = -1;
+    if (r) { homeMsg = r + " diriltildi (−1 hak)."; sfx.revive(); fx.rise(rc.left + rc.width / 2, rc.top + rc.height / 2); }
+    save(); renderStats();
+  });
+  $("rightsNote").addEventListener("click", function (e) {
+    if (e.target.closest("button[data-act='decline']")) declinePick();
+  });
+  $("tabWon").addEventListener("click", function () { toggleDrawer("l"); });
+  $("tabSeal").addEventListener("click", function () { toggleDrawer("r"); });
+  function closeByUser() {
+    if (state.pending) return;
+    if (document.body.classList.contains("l-open") || document.body.classList.contains("r-open")) sfx.whoosh();
+    closeDrawers();
+  }
+  $("xWon").addEventListener("click", closeByUser);
+  $("xSeal").addEventListener("click", closeByUser);
+  $("scrim").addEventListener("click", closeByUser);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawers(); });
+
+  function resetUI(c) { $("btnReset").hidden = c; $("btnResetYes").hidden = !c; $("btnResetNo").hidden = !c; }
+  $("btnReset").addEventListener("click", function () { resetUI(true); });
+  $("btnResetNo").addEventListener("click", function () { resetUI(false); });
+  $("btnResetYes").addEventListener("click", function () {
+    runId++; busy = false; run = {};
+    $("flash").classList.remove("on");
+    state = { sealed: [], wins: 0, losses: 0, sealRole: {}, won: [], rights: 0, rightFrom: [], pending: false, pity: false, bonus: newBonus() };
+    $("pity").hidden = true;
+    homeMsg = ""; confirmIdx = -1;
+    document.body.classList.remove("picking");
+    save(); resetUI(false);
+    show("vMap"); renderStats(); mapClear(true);
+  });
+
+  $("pityOk").addEventListener("click", function () { sfx.click(); closePity(); });
+  function syncMute() {
+    var m = sfx.isMuted(), b = $("mute");
+    b.classList.toggle("is-off", m);
+    b.setAttribute("aria-pressed", m ? "true" : "false");
+    b.setAttribute("aria-label", m ? "Sesi aç" : "Sesi kapat");
+  }
+  $("mute").addEventListener("click", function () { sfx.resume(); sfx.setMuted(!sfx.isMuted()); syncMute(); if (!sfx.isMuted()) sfx.click(); });
+  document.addEventListener("pointerdown", sfx.resume);
+  document.addEventListener("keydown", sfx.resume);
+  syncMute();
+  load(); buildMap(); show("vMap"); renderStats(); mapClear(true);
+  if (state.pending) openPick();
+  else if (state.pity) openPity();
+})();
+</script>
+</body>
+</html>
